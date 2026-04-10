@@ -2,19 +2,27 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { formatDateTime } from '@/utils/date-utils';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { axiosInstance } from '@/lib/axios';
 
 export default function CandidatesPage({ params }: { params: { id: string } }) {
-    const candidates = [
-        { id: 1, name: 'John Smith', email: 'john.smith@example.com', submittedAt: new Date(2026, 9, 12, 10, 30), autoSubmit: false },
-        { id: 2, name: 'Sarah Connor', email: 'sarah.c@example.com', submittedAt: new Date(2026, 9, 12, 11, 15), autoSubmit: true },
-        { id: 3, name: 'Michael Doe', email: 'm.doe@example.com', submittedAt: new Date(2026, 9, 12, 9, 45), autoSubmit: false },
-    ];
+    const { data: candidatesData, isLoading, isError } = useQuery({
+        queryKey: ['candidates', params.id],
+        queryFn: async () => {
+            const res = await axiosInstance.get(`/exams/${params.id}/candidates`);
+            return res.data;
+        }
+    });
+
+    const candidates = Array.isArray(candidatesData) ? candidatesData : Array.isArray(candidatesData?.data) ? candidatesData.data : [];
 
     return (
+        <ProtectedRoute allowedRoles={['employer']} loginPath="/employer/login">
         <div className="min-h-screen flex flex-col bg-[#F9FAFB] font-inter">
             <Navbar />
             
@@ -32,39 +40,50 @@ export default function CandidatesPage({ params }: { params: { id: string } }) {
 
                 {/* Table */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-gray-600">
-                            <thead className="bg-gray-50 text-gray-700 text-xs uppercase font-semibold border-b border-gray-200">
-                                <tr>
-                                    <th className="px-6 py-4">Name</th>
-                                    <th className="px-6 py-4">Email</th>
-                                    <th className="px-6 py-4">Submitted At</th>
-                                    <th className="px-6 py-4">Auto Submit</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {candidates.map((candidate) => (
-                                    <tr key={candidate.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-gray-900">{candidate.name}</td>
-                                        <td className="px-6 py-4">{candidate.email}</td>
-                                        <td className="px-6 py-4">{formatDateTime(candidate.submittedAt)}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
-                                                ${candidate.autoSubmit 
-                                                    ? 'bg-red-50 text-red-600 border border-red-100' 
-                                                    : 'bg-green-50 text-green-600 border border-green-100'}`}>
-                                                {candidate.autoSubmit ? 'Yes' : 'No'}
-                                            </span>
-                                        </td>
+                    {isLoading ? (
+                        <div className="flex justify-center py-20">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        </div>
+                    ) : isError ? (
+                        <div className="text-center py-20 text-red-500 font-medium">Failed to load candidates</div>
+                    ) : candidates.length === 0 ? (
+                        <div className="text-center py-20 text-gray-500 font-medium">No submissions yet</div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm text-gray-600">
+                                <thead className="bg-gray-50 text-gray-700 text-xs uppercase font-semibold border-b border-gray-200">
+                                    <tr>
+                                        <th className="px-6 py-4">Name</th>
+                                        <th className="px-6 py-4">Email</th>
+                                        <th className="px-6 py-4">Submitted At</th>
+                                        <th className="px-6 py-4">Auto Submit</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {candidates.map((candidate: any) => (
+                                        <tr key={candidate.id} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="px-6 py-4 font-medium text-gray-900">{candidate.name}</td>
+                                            <td className="px-6 py-4">{candidate.email}</td>
+                                            <td className="px-6 py-4">{candidate.submittedAt ? formatDateTime(candidate.submittedAt) : '-'}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                                                    ${candidate.isAutoSubmit || candidate.autoSubmit 
+                                                        ? 'bg-red-50 text-red-600 border border-red-100' 
+                                                        : 'bg-green-50 text-green-600 border border-green-100'}`}>
+                                                    {candidate.isAutoSubmit || candidate.autoSubmit ? 'Yes' : 'No'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             </main>
 
             <Footer />
         </div>
+        </ProtectedRoute>
     );
 }

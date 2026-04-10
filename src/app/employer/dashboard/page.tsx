@@ -1,33 +1,31 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ExamCard from '@/components/employer/ExamCard';
-import { Plus, PackageOpen } from 'lucide-react';
+import { Plus, PackageOpen, Loader2 } from 'lucide-react';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { axiosInstance } from '@/lib/axios';
+
+const fetchExams = async () => {
+    const response = await axiosInstance.get('/exams');
+    return response.data;
+};
 
 export default function EmployerDashboard() {
-    const [isEmpty, setIsEmpty] = useState(false);
 
-    const mockupExams = [
-        {
-            id: '1',
-            title: 'Psychometric Test for Management Trainee Officer',
-            candidates: 120,
-            questionSets: 3,
-            slots: 2,
-        },
-        {
-            id: '2',
-            title: 'Aptitude Test for Software Engineer',
-            candidates: 45,
-            questionSets: 2,
-            slots: 4,
-        }
-    ];
+    const { data: examsData, isLoading, isError } = useQuery({
+        queryKey: ['exams'],
+        queryFn: fetchExams
+    });
+
+    const examsList = Array.isArray(examsData) ? examsData : Array.isArray(examsData?.data) ? examsData.data : [];
 
     return (
+        <ProtectedRoute allowedRoles={['employer']} loginPath="/employer/login">
         <div className="min-h-screen flex flex-col bg-[#F9FAFB] font-inter">
             <Navbar />
             
@@ -36,17 +34,7 @@ export default function EmployerDashboard() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                     <h1 className="text-2xl font-bold text-gray-900">Online Tests</h1>
                     <div className="flex items-center gap-4">
-                        {/* Dev Toggle */}
-                        <label className="flex items-center cursor-pointer gap-2 bg-gray-200 px-3 py-1.5 rounded-full text-xs font-semibold text-gray-700">
-                            <input 
-                                type="checkbox" 
-                                className="sr-only peer" 
-                                checked={isEmpty}
-                                onChange={() => setIsEmpty(!isEmpty)}
-                            />
-                            <div className="w-8 h-4 bg-gray-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary relative"></div>
-                            Toggle Empty State
-                        </label>
+                        {/* Removed Toggle Empty State */}
 
                         <Link href="/employer/exams/create">
                             <button className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-md font-medium text-sm transition-colors shadow-sm">
@@ -58,7 +46,15 @@ export default function EmployerDashboard() {
                 </div>
 
                 {/* Content Area */}
-                {isEmpty ? (
+                {isLoading ? (
+                    <div className="min-h-[400px] flex items-center justify-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                    </div>
+                ) : isError ? (
+                    <div className="min-h-[400px] flex items-center justify-center text-red-500 font-medium">
+                        Failed to load exams. Please try again later.
+                    </div>
+                ) : examsList.length === 0 ? (
                     <div className="bg-white rounded-xl border border-gray-200 min-h-[400px] flex flex-col items-center justify-center p-8 shadow-sm">
                         <div className="bg-gray-50 rounded-full p-6 mb-4">
                             <PackageOpen className="w-16 h-16 text-gray-300" />
@@ -70,14 +66,14 @@ export default function EmployerDashboard() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                        {mockupExams.map(exam => (
+                        {examsList.map((exam: any) => (
                             <ExamCard 
                                 key={exam.id}
                                 examId={exam.id}
                                 title={exam.title}
-                                candidates={exam.candidates}
-                                questionSets={exam.questionSets}
-                                slots={exam.slots}
+                                candidates={exam.totalCandidates || exam.candidates || 0}
+                                questionSets={exam.questionSets || 0}
+                                slots={exam.totalSlots || exam.slots || 0}
                             />
                         ))}
                     </div>
@@ -86,5 +82,6 @@ export default function EmployerDashboard() {
 
             <Footer />
         </div>
+        </ProtectedRoute>
     );
 }

@@ -1,69 +1,159 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Clock, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Modal from '@/components/ui/Modal';
 import TextEditor from '@/components/form/TextEditor';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { axiosInstance } from '@/lib/axios';
+import { showToast } from '@/utils/toast-utils';
 
 export default function ExamSessionPage({ params }: { params: { id: string } }) {
+    const router = useRouter();
     const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [isTimeoutModalOpen, setIsTimeoutModalOpen] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(1511); // 25:11 in seconds
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
+    const [answers, setAnswers] = useState<any[]>([]);
+    
+    // Timer ref to prevent concurrent interval issues
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Simulating timer (just for effect)
+    const { data: fetchRes, isLoading, isError } = useQuery({
+        queryKey: ['candidate-exam-questions', params.id],
+        queryFn: async () => {
+            const res = await axiosInstance.get(`/candidate/exams/${params.id}/questions`);
+            return res.data;
+        },
+        refetchOnWindowFocus: false, // Prevents restarting timer/fetching on focus
+    });
+
+    const examData = fetchRes?.data || fetchRes || {};
+    const questions = examData.questions || [];
+    
+    // Initialize timer only once when duration is loaded
     useEffect(() => {
-        const timer = setInterval(() => {
-            setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-        }, 1000);
-        return () => clearInterval(timer);
-    }, []);
+        if (examData.duration && timeLeft === null) {
+            setTimeLeft(examData.duration * 60);
+        }
+    }, [examData.duration, timeLeft]);
 
-    const formatTime = (seconds: number) => {
+    // Timer Logic
+    useEffect(() => {
+        if (timeLeft === null || timeLeft <= 0) return;
+
+        timerRef.current = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev === null || prev <= 1) {
+                    clearInterval(timerRef.current!);
+                    handleAutoSubmit();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => {
+            if (timerRef.current) clearInterval(timerRef.current);
+        };
+    }, [timeLeft]);
+
+    const formatTime = (seconds: number | null) => {
+        if (seconds === null) return "--:--";
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
         return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
-
-    const questions = [
-        {
-            id: 1,
-            title: "Which of the following indicators is used to measure overall volatility?",
-            type: "Radio",
-            options: ["Bollinger Bands", "RSI", "MACD", "Moving Average"]
-        },
-        {
-            id: 2,
-            title: "Which of the following are programming languages? (Select all that apply)",
-            type: "Checkbox",
-            options: ["Python", "HTML", "C++", "CSS"]
-        },
-        {
-            id: 3,
-            title: "Briefly explain the role of a garbage collector in memory management.",
-            type: "Text",
-        }
-    ];
 
     const isLastQuestion = currentQuestionIdx === questions.length - 1;
     const currentQuestion = questions[currentQuestionIdx];
 
     const handleNext = () => {
         if (isLastQuestion) {
-            setIsSuccessModalOpen(true);
+            setIsConfirmModalOpen(true);
         } else {
-            setCurrentQuestionIdx(prev => prev + 1);
+            setCurrentQuestionIdx((prev) => prev + 1);
         }
     };
 
-    // To simulate timeout for testing
-    const triggerTimeout = () => {
-        setIsTimeoutModalOpen(true);
+    const handleAnswerUpdate = (questionId: string, answerText?: string, selectedOptionIds?: string[]) => {
+        setAnswers(prev => {
+            const copy = [...prev];
+            const existingIdx = copy.findIndex(a => a.questionId === questionId);
+            const payload = { questionId, answerText, selectedOptionIds };
+            
+            if (existingIdx >= 0) {
+                copy[existingIdx] = payload;
+            } else {
+                copy.push(payload);
+            }
+            return copy;
+        });
     };
 
+    const submitMutation = useMutation({
+        mutationFn: async (isAutoSubmit: boolean) => {
+            return axiosInstance.post('/submissions', {
+                examId: params.id,
+                isAutoSubmit,
+                answers
+            });
+        }
+    });
+
+    const handleManualSubmit = async () => {
+        setIsConfirmModalOpen(false);
+        try {
+            await submitMutation.mutateAsync(false);
+            if (timerRef.current) clearInterval(timerRef.current);
+            setIsSuccessModalOpen(true);
+        } catch (error: any) {
+            showToast('error', error.response?.data?.message || 'Failed to submit exam');
+        }
+    };
+
+    const handleAutoSubmit = async () => {
+        try {
+            await submitMutation.mutateAsync(true);
+            setIsTimeoutModalOpen(true);
+        } catch (error: any) {
+            // Still show timeout even if fails slightly, it locks the screen
+            setIsTimeoutModalOpen(true);
+        }
+    };
+
+    const getAnswerForCurrentQuestion = () => {
+        if (!currentQuestion) return null;
+        return answers.find(a => a.questionId === currentQuestion.id);
+    };
+
+    if (isLoading) {
+        return (
+            <ProtectedRoute allowedRoles={['candidate']} loginPath="/candidate/login">
+                <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                </div>
+            </ProtectedRoute>
+        );
+    }
+
+    if (isError || questions.length === 0) {
+        return (
+            <ProtectedRoute allowedRoles={['candidate']} loginPath="/candidate/login">
+                <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
+                    <div className="text-center text-red-500 font-medium">Failed to load exam or no questions available.</div>
+                </div>
+            </ProtectedRoute>
+        );
+    }
+
     return (
+        <ProtectedRoute allowedRoles={['candidate']} loginPath="/candidate/login">
         <div className="min-h-screen flex flex-col bg-[#F9FAFB] font-inter">
             <Navbar />
             
@@ -75,7 +165,6 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                     </div>
                     
                     <div className="flex items-center gap-4">
-                        <button onClick={triggerTimeout} className="text-xs text-gray-400 hover:text-gray-600 underline hidden sm:block">Simulate Timeout</button>
                         <div className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-lg border border-red-200 font-bold tracking-wider">
                             <Clock className="w-5 h-5" />
                             {formatTime(timeLeft)}
@@ -97,24 +186,47 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                     </h2>
 
                     <div className="space-y-4 mb-10">
-                        {currentQuestion.type === "Radio" && currentQuestion.options?.map((opt, i) => (
-                            <label key={i} className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-all">
-                                <input type="radio" name={`q-${currentQuestion.id}`} className="w-5 h-5 text-primary border-gray-300 focus:ring-primary" />
-                                <span className="text-gray-700 text-lg">{opt}</span>
-                            </label>
-                        ))}
+                        {currentQuestion.type === "Radio" && currentQuestion.options?.map((opt: any, i: number) => {
+                            const isChecked = getAnswerForCurrentQuestion()?.selectedOptionIds?.includes(opt.id);
+                            return (
+                                <label key={opt.id || i} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${isChecked ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50 hover:bg-primary/5'}`}>
+                                    <input 
+                                        type="radio" 
+                                        name={`q-${currentQuestion.id}`} 
+                                        checked={isChecked || false}
+                                        onChange={() => handleAnswerUpdate(currentQuestion.id, undefined, [opt.id])}
+                                        className="w-5 h-5 text-primary border-gray-300 focus:ring-primary" 
+                                    />
+                                    <span className="text-gray-700 text-lg">{opt.text || opt}</span>
+                                </label>
+                            );
+                        })}
 
-                        {currentQuestion.type === "Checkbox" && currentQuestion.options?.map((opt, i) => (
-                            <label key={i} className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-all">
-                                <input type="checkbox" className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary" />
-                                <span className="text-gray-700 text-lg">{opt}</span>
-                            </label>
-                        ))}
+                        {currentQuestion.type === "Checkbox" && currentQuestion.options?.map((opt: any, i: number) => {
+                            const selectedIds = getAnswerForCurrentQuestion()?.selectedOptionIds || [];
+                            const isChecked = selectedIds.includes(opt.id);
+                            return (
+                                <label key={opt.id || i} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${isChecked ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50 hover:bg-primary/5'}`}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={isChecked || false}
+                                        onChange={(e) => {
+                                            const newIds = e.target.checked 
+                                                ? [...selectedIds, opt.id] 
+                                                : selectedIds.filter((id: string) => id !== opt.id);
+                                            handleAnswerUpdate(currentQuestion.id, undefined, newIds);
+                                        }}
+                                        className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary" 
+                                    />
+                                    <span className="text-gray-700 text-lg">{opt.text || opt}</span>
+                                </label>
+                            );
+                        })}
 
                         {currentQuestion.type === "Text" && (
                             <TextEditor 
-                                value=""
-                                onChange={(val) => {console.log(val)}}
+                                value={getAnswerForCurrentQuestion()?.answerText || ""}
+                                onChange={(val) => handleAnswerUpdate(currentQuestion.id, val, undefined)}
                             />
                         )}
                     </div>
@@ -122,13 +234,29 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                     <div className="flex justify-end pt-6 border-t border-gray-100">
                         <button 
                             onClick={handleNext} 
-                            className="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-all shadow-md active:scale-[0.98] text-lg"
+                            disabled={submitMutation.isPending}
+                            className="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-all shadow-md active:scale-[0.98] text-lg disabled:opacity-70 flex items-center gap-2"
                         >
                             {isLastQuestion ? "Submit Exam" : "Save & Next"}
                         </button>
                     </div>
                 </div>
             </main>
+
+            {/* Confirm Submit Modal */}
+            <Modal isOpen={isConfirmModalOpen} onClose={() => setIsConfirmModalOpen(false)} title="Confirm Submission">
+                <div className="space-y-4">
+                    <p className="text-gray-600">Are you sure you want to submit your exam now? You won't be able to change your answers afterward.</p>
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button onClick={() => setIsConfirmModalOpen(false)} className="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors">
+                            Resume Exam
+                        </button>
+                        <button onClick={handleManualSubmit} disabled={submitMutation.isPending} className="px-5 py-2 bg-primary text-white rounded-md hover:bg-primary-dark font-medium text-sm transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2">
+                            {submitMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />} Confirm Submit
+                        </button>
+                    </div>
+                </div>
+            </Modal>
 
             {/* Success Modal */}
             <Modal isOpen={isSuccessModalOpen} onClose={() => {}} maxWidth="max-w-md">
@@ -160,11 +288,12 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                     </p>
                     <Link href="/candidate/dashboard" className="w-full">
                         <button className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors shadow-sm">
-                            Give Feedback
+                            Back to Dashboard
                         </button>
                     </Link>
                 </div>
             </Modal>
         </div>
+        </ProtectedRoute>
     );
 }
