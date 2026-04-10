@@ -29,7 +29,7 @@ export default function CandidatesPage({ params }: { params: { id: string } }) {
             <main className="flex-1 w-full max-w-6xl mx-auto px-6 py-8">
                 {/* Header */}
                 <div className="flex items-start gap-4 mb-8">
-                    <Link href="/employer/dashboard" className="mt-1 p-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                    <Link href="/employer/dashboard" className="mt-1 p-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
                         <ArrowLeft className="w-5 h-5 text-gray-700" />
                     </Link>
                     <div>

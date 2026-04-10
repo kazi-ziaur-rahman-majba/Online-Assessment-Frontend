@@ -106,7 +106,7 @@ export default function CandidateLogin() {
                                 )}
                             />
                             <div className="flex justify-end mt-2">
-                                <Link href="#" className="text-sm font-medium text-primary hover:text-primary-dark transition-colors">
+                                <Link href="#" className="text-sm font-medium text-primary hover:text-primary-dark transition-colors cursor-pointer">
                                     Forgot Password?
                                 </Link>
                             </div>
@@ -115,7 +115,7 @@ export default function CandidateLogin() {
                         <button 
                             type="submit" 
                             disabled={isLoading}
-                            className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow-md shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-70 flex justify-center"
+                            className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow-md shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-70 flex justify-center cursor-pointer"
                         >
                             {isLoading ? "Logging in..." : "Login"}
                         </button>

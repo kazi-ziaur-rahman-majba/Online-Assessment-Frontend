@@ -13,7 +13,7 @@ export default function CandidateDashboard() {
     const { data: examsData, isLoading, isError } = useQuery({
         queryKey: ['candidate-exams'],
         queryFn: async () => {
-            const res = await axiosInstance.get('/candidate/exams');
+            const res = await axiosInstance.get('/candidate/exams?all=true');
             return res.data;
         }
     });

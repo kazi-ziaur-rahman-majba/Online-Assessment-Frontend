@@ -41,9 +41,14 @@ export default function ExamCard({ title, candidates, questionSets, slots, examI
                 </div>
             </div>
 
-            <div className="mt-auto flex justify-end">
-                <Link href={`/employer/exams/${examId}/candidates`}>
-                    <button className="px-4 py-2 text-sm font-medium border border-primary text-primary rounded-md hover:bg-primary/5 transition-colors">
+            <div className="mt-auto flex justify-end gap-3">
+                <Link href={`/employer/exams/${examId}/edit`} className="cursor-pointer">
+                    <button className="px-4 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
+                        Edit
+                    </button>
+                </Link>
+                <Link href={`/employer/exams/${examId}/candidates`} className="cursor-pointer">
+                    <button className="px-4 py-2 text-sm font-medium border border-primary text-primary rounded-md hover:bg-primary/5 transition-colors cursor-pointer">
                         View Candidates
                     </button>
                 </Link>

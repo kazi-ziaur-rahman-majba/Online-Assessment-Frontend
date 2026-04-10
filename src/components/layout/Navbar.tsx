@@ -25,10 +25,10 @@ export default function Navbar() {
     };
 	return (
 		<nav className="bg-primary-dark text-white px-6 py-4 flex items-center justify-between shadow-md">
-			<Link href="/" className="flex items-center gap-2">
+			<Link href="/" className="flex items-center gap-2 cursor-pointer">
 				{/* Placeholder for Logo */}
-				<div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center font-bold text-white">AR</div>
-				<span className="text-xl font-bold tracking-wide">Akij Resource</span>
+				<div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center font-bold text-white cursor-pointer">AR</div>
+				<span className="text-xl font-bold tracking-wide cursor-pointer">Akij Resource</span>
 			</Link>
 			
 			<div className="flex items-center gap-4">
@@ -38,7 +38,7 @@ export default function Navbar() {
 						<span className="text-xs text-gray-300">{user.email}</span>
 					</div>
 				)}
-				<button onClick={handleLogout} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Logout">
+				<button onClick={handleLogout} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer" title="Logout">
 					<LogOut className="w-5 h-5" />
 				</button>
 			</div>

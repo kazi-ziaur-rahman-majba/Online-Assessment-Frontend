@@ -36,8 +36,8 @@ export default function EmployerDashboard() {
                     <div className="flex items-center gap-4">
                         {/* Removed Toggle Empty State */}
 
-                        <Link href="/employer/exams/create">
-                            <button className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-md font-medium text-sm transition-colors shadow-sm">
+                        <Link href="/employer/exams/create" className="cursor-pointer">
+                            <button className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-md font-medium text-sm transition-colors shadow-sm cursor-pointer">
                                 <Plus className="w-4 h-4" />
                                 Create Online Test
                             </button>

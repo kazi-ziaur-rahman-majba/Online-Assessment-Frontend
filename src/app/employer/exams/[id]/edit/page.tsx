@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Plus, PencilLine, Trash2, X, Loader2 } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Modal from '@/components/ui/Modal';
@@ -33,12 +33,24 @@ const step1Schema = z.object({
 
 type Step1FormValues = z.infer<typeof step1Schema>;
 
-export default function CreateExamPage() {
+const formatDateTimeLocal = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+export default function EditExamPage() {
     const router = useRouter();
+    const params = useParams();
+    const id = params.id as string;
     const queryClient = useQueryClient();
     const [step, setStep] = useState(1);
-    const [examId, setExamId] = useState<string | null>(null);
-    const [isCreatingExam, setIsCreatingExam] = useState(false);
+    const [isUpdatingExam, setIsUpdatingExam] = useState(false);
     
     // Modal state for Step 2
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,7 +60,7 @@ export default function CreateExamPage() {
     const [options, setOptions] = useState([{ id: Date.now(), text: '', isCorrect: false }]);
     const [isSavingQuestion, setIsSavingQuestion] = useState(false);
 
-    const { control, handleSubmit, formState: { errors } } = useForm<Step1FormValues>({
+    const { control, handleSubmit, reset, formState: { errors } } = useForm<Step1FormValues>({
         resolver: zodResolver(step1Schema),
         defaultValues: {
             title: '',
@@ -62,28 +74,52 @@ export default function CreateExamPage() {
         }
     });
 
+    // Fetch existing exam data
+    const { data: examData, isLoading: examLoading } = useQuery({
+        queryKey: ['exam', id],
+        queryFn: async () => {
+            const res = await axiosInstance.get(`/exams/${id}`);
+            return res.data?.data || res.data;
+        },
+        enabled: !!id
+    });
+
+    useEffect(() => {
+        if (examData) {
+            reset({
+                title: examData.title || '',
+                totalCandidates: examData.totalCandidates || examData.candidates || 0,
+                totalSlots: examData.totalSlots || examData.slots || 0,
+                questionSets: examData.questionSets || 0,
+                questionType: examData.questionType || 'mixed',
+                startTime: formatDateTimeLocal(examData.startTime),
+                endTime: formatDateTimeLocal(examData.endTime),
+                duration: examData.duration || 60
+            });
+        }
+    }, [examData, reset]);
+
     const onStep1Submit = async (data: Step1FormValues) => {
-        setIsCreatingExam(true);
+        setIsUpdatingExam(true);
         try {
-            const res = await axiosInstance.post('/exams', data);
-            setExamId(res.data?.id || res.data?.data?.id);
+            await axiosInstance.patch(`/exams/${id}`, data);
             setStep(2);
-            showToast('success', 'Exam details saved!');
+            showToast('success', 'Exam details updated!');
         } catch (error: any) {
-            showToast('error', error.response?.data?.message || 'Failed to create exam');
+            showToast('error', error.response?.data?.message || 'Failed to update exam');
         } finally {
-            setIsCreatingExam(false);
+            setIsUpdatingExam(false);
         }
     };
 
     // Step 2 Queries
     const { data: fetchRes, isLoading: questionsLoading } = useQuery({
-        queryKey: ['exam-questions', examId],
+        queryKey: ['exam-questions', id],
         queryFn: async () => {
-            const res = await axiosInstance.get(`/exams/${examId}`);
+            const res = await axiosInstance.get(`/exams/${id}`);
             return res.data;
         },
-        enabled: !!examId && step === 2
+        enabled: !!id && step === 2
     });
     
     const questions = fetchRes?.data?.questions || fetchRes?.questions || [];
@@ -128,10 +164,10 @@ export default function CreateExamPage() {
                 await axiosInstance.put(`/questions/${editingQuestionId}`, payload);
                 showToast('success', 'Question updated!');
             } else {
-                await axiosInstance.post(`/exams/${examId}/questions`, payload);
+                await axiosInstance.post(`/exams/${id}/questions`, payload);
                 showToast('success', 'Question added!');
             }
-            queryClient.invalidateQueries({ queryKey: ['exam-questions', examId] });
+            queryClient.invalidateQueries({ queryKey: ['exam-questions', id] });
             resetModal();
         } catch (error: any) {
             showToast('error', error.response?.data?.message || 'Failed to save question');
@@ -144,7 +180,7 @@ export default function CreateExamPage() {
         if (!window.confirm("Are you sure you want to delete this question?")) return;
         try {
             await axiosInstance.delete(`/questions/${id}`);
-            queryClient.invalidateQueries({ queryKey: ['exam-questions', examId] });
+            queryClient.invalidateQueries({ queryKey: ['exam-questions', id] });
             showToast('success', 'Question deleted');
         } catch (error) {
             showToast('error', 'Failed to delete question');
@@ -164,6 +200,14 @@ export default function CreateExamPage() {
         setIsModalOpen(true);
     };
 
+    if (examLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            </div>
+        );
+    }
+
     return (
         <ProtectedRoute allowedRoles={['employer']} loginPath="/employer/login">
         <div className="min-h-screen flex flex-col bg-[#F9FAFB] font-inter">
@@ -174,15 +218,15 @@ export default function CreateExamPage() {
                     <Link href="/employer/dashboard" className="p-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
                         <ArrowLeft className="w-5 h-5 text-gray-700" />
                     </Link>
-                    <h1 className="text-2xl font-bold text-gray-900">Manage Online Test</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">Edit Online Test</h1>
                 </div>
 
                 <div className="flex items-center gap-8 mb-8 border-b border-gray-200 pb-4">
-                    <div className={`flex items-center gap-2 font-medium ${step === 1 ? 'text-primary border-b-2 border-primary pb-[17px] -mb-[17px]' : 'text-gray-400 cursor-not-allowed'}`}>
+                    <div onClick={() => setStep(1)} className={`flex items-center gap-2 font-medium cursor-pointer ${step === 1 ? 'text-primary border-b-2 border-primary pb-[17px] -mb-[17px]' : 'text-gray-400'}`}>
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs text-white ${step === 1 ? 'bg-primary' : 'bg-gray-300'}`}>1</div>
                         Step 1 - Basic Information
                     </div>
-                    <div className={`flex items-center gap-2 font-medium ${step === 2 ? 'text-primary border-b-2 border-primary pb-[17px] -mb-[17px]' : 'text-gray-400 cursor-not-allowed'}`}>
+                    <div onClick={() => setStep(2)} className={`flex items-center gap-2 font-medium cursor-pointer ${step === 2 ? 'text-primary border-b-2 border-primary pb-[17px] -mb-[17px]' : 'text-gray-400'}`}>
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs text-white ${step === 2 ? 'bg-primary' : 'bg-gray-300'}`}>2</div>
                         Step 2 - Question Sets
                     </div>
@@ -254,9 +298,9 @@ export default function CreateExamPage() {
                             </div>
 
                             <div className="flex justify-end pt-4">
-                                <button type="submit" disabled={isCreatingExam} className="bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-medium transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2 cursor-pointer">
-                                    {isCreatingExam && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    Next
+                                <button type="submit" disabled={isUpdatingExam} className="bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-medium transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2 cursor-pointer">
+                                    {isUpdatingExam && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    Update & Next
                                 </button>
                             </div>
                         </form>

@@ -195,9 +195,9 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                                         name={`q-${currentQuestion.id}`} 
                                         checked={isChecked || false}
                                         onChange={() => handleAnswerUpdate(currentQuestion.id, undefined, [opt.id])}
-                                        className="w-5 h-5 text-primary border-gray-300 focus:ring-primary" 
+                                        className="w-5 h-5 text-primary border-gray-300 focus:ring-primary cursor-pointer" 
                                     />
-                                    <span className="text-gray-700 text-lg">{opt.text || opt}</span>
+                                    <span className="text-gray-700 text-lg cursor-pointer">{opt.text || opt}</span>
                                 </label>
                             );
                         })}
@@ -216,9 +216,9 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                                                 : selectedIds.filter((id: string) => id !== opt.id);
                                             handleAnswerUpdate(currentQuestion.id, undefined, newIds);
                                         }}
-                                        className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary" 
+                                        className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer" 
                                     />
-                                    <span className="text-gray-700 text-lg">{opt.text || opt}</span>
+                                    <span className="text-gray-700 text-lg cursor-pointer">{opt.text || opt}</span>
                                 </label>
                             );
                         })}
@@ -235,7 +235,7 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                         <button 
                             onClick={handleNext} 
                             disabled={submitMutation.isPending}
-                            className="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-all shadow-md active:scale-[0.98] text-lg disabled:opacity-70 flex items-center gap-2"
+                            className="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-all shadow-md active:scale-[0.98] text-lg disabled:opacity-70 flex items-center gap-2 cursor-pointer"
                         >
                             {isLastQuestion ? "Submit Exam" : "Save & Next"}
                         </button>
@@ -248,10 +248,10 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                 <div className="space-y-4">
                     <p className="text-gray-600">Are you sure you want to submit your exam now? You won't be able to change your answers afterward.</p>
                     <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                        <button onClick={() => setIsConfirmModalOpen(false)} className="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors">
+                        <button onClick={() => setIsConfirmModalOpen(false)} className="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors cursor-pointer">
                             Resume Exam
                         </button>
-                        <button onClick={handleManualSubmit} disabled={submitMutation.isPending} className="px-5 py-2 bg-primary text-white rounded-md hover:bg-primary-dark font-medium text-sm transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2">
+                        <button onClick={handleManualSubmit} disabled={submitMutation.isPending} className="px-5 py-2 bg-primary text-white rounded-md hover:bg-primary-dark font-medium text-sm transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2 cursor-pointer">
                             {submitMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />} Confirm Submit
                         </button>
                     </div>
@@ -268,8 +268,8 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                     <p className="text-gray-500 mb-8 max-w-sm">
                         You have successfully submitted your exam. Your responses have been saved.
                     </p>
-                    <Link href="/candidate/dashboard" className="w-full">
-                        <button className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors shadow-sm">
+                    <Link href="/candidate/dashboard" className="w-full cursor-pointer">
+                        <button className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors shadow-sm cursor-pointer">
                             Back to Dashboard
                         </button>
                     </Link>
@@ -286,8 +286,8 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                     <p className="text-gray-500 mb-8 max-w-sm">
                         Unfortunately you ran out of time. Your responses up to this point have been submitted.
                     </p>
-                    <Link href="/candidate/dashboard" className="w-full">
-                        <button className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors shadow-sm">
+                    <Link href="/candidate/dashboard" className="w-full cursor-pointer">
+                        <button className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors shadow-sm cursor-pointer">
                             Back to Dashboard
                         </button>
                     </Link>
