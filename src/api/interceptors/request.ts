@@ -2,7 +2,7 @@ import { axiosInstance } from "../axios-instance";
 
 axiosInstance.interceptors.request.use(
     (config) => {
-        const token = authUtils.getAccessToken();
+        const token = null; // authUtils.getAccessToken();
 
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
