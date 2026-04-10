@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+@import 'tailwindcss';
+
+:root {
+	--primary-color: #E04F16;
+	--primary-color-light: #FCEFEA;
+	--primary-color-dark: #051A2C;
+	--secondary-color: #FF6E22;
+	--secondary-color-light: #f94766;
+	/* --body-color: #475467; */
+	--quaternary-color: #1c8806;
+	--gray-color: #cac2c2;
+
+	/* Brand */
+	--brand-primary: #E04F16;
+	--brand-primary-light: #FCEFEA;
+	--brand-primary-dark: #051A2C;
+  
+	--brand-secondary: #FF6E22;
+}
+
+
+body {
+	/* background: var(--background); */
+	/* color: var(--foreground); */
+	font-family: "Nunito Sans", sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family: "Nunito Sans", sans-serif;
+}
+
+@theme {
+	--color-primary: var(--primary-color);
+	--color-secondary: var(--secondary-color);
+	--color-primary-light: var(--primary-color-light);
+	--color-secondary-light: var(--secondary-color-light);
+	--color-tertiary: var(--tertiary-color);
+	--color-quaternary: var(--quaternary-color);
+	/* --color-text: var(--body-color); */
+	--color-gray-light: var(--gray-color);
+	--font-inter: "Nunito Sans", sans-serif;
+}
+
+p {
+	/* color: var(--body-color); */
+}
+
+label {
+	font-family: "Nunito Sans", sans-serif;
+}
+
+::-webkit-scrollbar {
+	width: 5px;
+	height: 5px;
+}
+
+.dropdownScrollbar::-webkit-scrollbar {
+	width: 5px;
+	height: 3px;
+}
+
+.dropdownScrollbar::-webkit-scrollbar-thumb {
+	background-color: var(--primary-color);
+	border-radius: 6px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+	box-shadow: inset 0 0 5px rgb(249, 249, 249);
+	border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+	background: var(--primary-color);
+	border-radius: 10px;
+}
+
+/* Remove time input spinner & icon */
+input[type='time']::-webkit-calendar-picker-indicator {
+	display: none;
+	-webkit-appearance: none;
+}
+
+/* Optional: remove clear button (for input[type="search"]) */
+input[type='time']::-webkit-clear-button {
+	display: none;
+}
