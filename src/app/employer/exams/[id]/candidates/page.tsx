@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
@@ -10,16 +11,24 @@ import { formatDateTime } from '@/utils/date-utils';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { axiosInstance } from '@/lib/axios';
 
-export default function CandidatesPage({ params }: { params: { id: string } }) {
+export default function CandidatesPage() {
+    const params = useParams();
+    const id = params.id as string;
+
     const { data: candidatesData, isLoading, isError } = useQuery({
-        queryKey: ['candidates', params.id],
+        queryKey: ['candidates', id],
         queryFn: async () => {
-            const res = await axiosInstance.get(`/exams/${params.id}/candidates`);
+            const res = await axiosInstance.get(`/exams/${id}/candidates`);
             return res.data;
-        }
+        },
+        enabled: !!id
     });
 
-    const candidates = Array.isArray(candidatesData) ? candidatesData : Array.isArray(candidatesData?.data) ? candidatesData.data : [];
+    const submissions = Array.isArray(candidatesData) 
+        ? candidatesData 
+        : Array.isArray(candidatesData?.data) 
+            ? candidatesData.data 
+            : [];
 
     return (
         <ProtectedRoute allowedRoles={['employer']} loginPath="/employer/login">
@@ -33,8 +42,8 @@ export default function CandidatesPage({ params }: { params: { id: string } }) {
                         <ArrowLeft className="w-5 h-5 text-gray-700" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Manage Online Test</h1>
-                        <p className="text-gray-500 mt-1">Psychometric Test for Management Trainee Officer</p>
+                        <h1 className="text-2xl font-bold text-gray-900">Exam Submissions</h1>
+                        <p className="text-gray-500 mt-1 text-sm">View all candidates who participated in this online test.</p>
                     </div>
                 </div>
 
@@ -45,8 +54,10 @@ export default function CandidatesPage({ params }: { params: { id: string } }) {
                             <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         </div>
                     ) : isError ? (
-                        <div className="text-center py-20 text-red-500 font-medium">Failed to load candidates</div>
-                    ) : candidates.length === 0 ? (
+                        <div className="text-center py-20 text-red-500 font-medium p-6">
+                            <p>Failed to load candidates. Please try again later.</p>
+                        </div>
+                    ) : submissions.length === 0 ? (
                         <div className="text-center py-20 text-gray-500 font-medium">No submissions yet</div>
                     ) : (
                         <div className="overflow-x-auto">
@@ -60,21 +71,31 @@ export default function CandidatesPage({ params }: { params: { id: string } }) {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {candidates.map((candidate: any) => (
-                                        <tr key={candidate.id} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-gray-900">{candidate.name}</td>
-                                            <td className="px-6 py-4">{candidate.email}</td>
-                                            <td className="px-6 py-4">{candidate.submittedAt ? formatDateTime(candidate.submittedAt) : '-'}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
-                                                    ${candidate.isAutoSubmit || candidate.autoSubmit 
-                                                        ? 'bg-red-50 text-red-600 border border-red-100' 
-                                                        : 'bg-green-50 text-green-600 border border-green-100'}`}>
-                                                    {candidate.isAutoSubmit || candidate.autoSubmit ? 'Yes' : 'No'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {submissions.map((item: any) => {
+                                        // User stated name/email come from the candidate object inside the item
+                                        const candidateInfo = item.candidate || {};
+                                        return (
+                                            <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4 font-medium text-gray-900">
+                                                    {candidateInfo.name || item.name || 'N/A'}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {candidateInfo.email || item.email || 'N/A'}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {item.submittedAt ? formatDateTime(item.submittedAt) : '-'}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                                                        ${item.isAutoSubmit || item.autoSubmit 
+                                                            ? 'bg-red-50 text-red-600 border border-red-100' 
+                                                            : 'bg-green-50 text-green-600 border border-green-100'}`}>
+                                                        {item.isAutoSubmit || item.autoSubmit ? 'Yes' : 'No'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

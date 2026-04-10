@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Clock, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
@@ -12,8 +12,10 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { axiosInstance } from '@/lib/axios';
 import { showToast } from '@/utils/toast-utils';
 
-export default function ExamSessionPage({ params }: { params: { id: string } }) {
+export default function ExamSessionPage() {
     const router = useRouter();
+    const params = useParams();
+    const id = params.id as string;
     const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [isTimeoutModalOpen, setIsTimeoutModalOpen] = useState(false);
@@ -25,21 +27,29 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     const { data: fetchRes, isLoading, isError } = useQuery({
-        queryKey: ['candidate-exam-questions', params.id],
+        queryKey: ['candidate-exam-questions', id],
         queryFn: async () => {
-            const res = await axiosInstance.get(`/candidate/exams/${params.id}/questions`);
+            const res = await axiosInstance.get(`/candidate/exams/${id}/questions`);
             return res.data;
         },
-        refetchOnWindowFocus: false, // Prevents restarting timer/fetching on focus
+        enabled: !!id,
+        refetchOnWindowFocus: false,
     });
 
-    const examData = fetchRes?.data || fetchRes || {};
-    const questions = examData.questions || [];
+    // Handle different API response structures
+    const questions = Array.isArray(fetchRes) 
+        ? fetchRes 
+        : (fetchRes?.data?.questions || fetchRes?.questions || fetchRes?.data || []);
+    
+    const examData = Array.isArray(fetchRes) 
+        ? { questions: fetchRes, duration: 60 } // Fallback duration if array
+        : (fetchRes?.data || fetchRes || {});
     
     // Initialize timer only once when duration is loaded
     useEffect(() => {
-        if (examData.duration && timeLeft === null) {
-            setTimeLeft(examData.duration * 60);
+        const duration = examData.duration || 60; // Default to 60 if not found
+        if (duration && timeLeft === null) {
+            setTimeLeft(duration * 60);
         }
     }, [examData.duration, timeLeft]);
 
@@ -50,7 +60,7 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
         timerRef.current = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev === null || prev <= 1) {
-                    clearInterval(timerRef.current!);
+                    if (timerRef.current) clearInterval(timerRef.current);
                     handleAutoSubmit();
                     return 0;
                 }
@@ -99,7 +109,7 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
     const submitMutation = useMutation({
         mutationFn: async (isAutoSubmit: boolean) => {
             return axiosInstance.post('/submissions', {
-                examId: params.id,
+                examId: id,
                 isAutoSubmit,
                 answers
             });
@@ -113,7 +123,12 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
             if (timerRef.current) clearInterval(timerRef.current);
             setIsSuccessModalOpen(true);
         } catch (error: any) {
-            showToast('error', error.response?.data?.message || 'Failed to submit exam');
+            const errorMsg = error.response?.data?.message || error.message || 'Failed to submit exam';
+            showToast('error', errorMsg);
+            
+            // If already submitted, we can still show success modal after a delay 
+            // or just let them stay on the page with the error toast.
+            // Based on user request, showing the toast is the priority.
         }
     };
 
@@ -122,7 +137,8 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
             await submitMutation.mutateAsync(true);
             setIsTimeoutModalOpen(true);
         } catch (error: any) {
-            // Still show timeout even if fails slightly, it locks the screen
+            const errorMsg = error.response?.data?.message || error.message || 'Auto-submit failed';
+            showToast('error', errorMsg);
             setIsTimeoutModalOpen(true);
         }
     };
@@ -136,17 +152,30 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
         return (
             <ProtectedRoute allowedRoles={['candidate']} loginPath="/candidate/login">
                 <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
-                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                        <p className="text-gray-500 font-medium">Loading exam questions...</p>
+                    </div>
                 </div>
             </ProtectedRoute>
         );
     }
 
-    if (isError || questions.length === 0) {
+    if (isError || !questions || questions.length === 0) {
         return (
             <ProtectedRoute allowedRoles={['candidate']} loginPath="/candidate/login">
-                <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
-                    <div className="text-center text-red-500 font-medium">Failed to load exam or no questions available.</div>
+                <Navbar />
+                <div className="min-h-[calc(100-64px)] flex items-center justify-center bg-[#F9FAFB] p-6">
+                    <div className="text-center max-w-md">
+                        <div className="bg-red-50 text-red-500 p-4 rounded-xl mb-6 font-medium border border-red-100">
+                            Failed to load exam or no questions available.
+                        </div>
+                        <Link href="/candidate/dashboard">
+                            <button className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors cursor-pointer">
+                                Back to Dashboard
+                            </button>
+                        </Link>
+                    </div>
                 </div>
             </ProtectedRoute>
         );
@@ -182,11 +211,12 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
 
                     <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-8 leading-relaxed">
                         <span className="text-primary mr-2">Q.</span>
-                        {currentQuestion.title}
+                        {currentQuestion?.title}
                     </h2>
 
                     <div className="space-y-4 mb-10">
-                        {currentQuestion.type === "Radio" && currentQuestion.options?.map((opt: any, i: number) => {
+                        {/* Lowercase type checks to match database values */}
+                        {currentQuestion?.type === "radio" && currentQuestion.options?.map((opt: any, i: number) => {
                             const isChecked = getAnswerForCurrentQuestion()?.selectedOptionIds?.includes(opt.id);
                             return (
                                 <label key={opt.id || i} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${isChecked ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50 hover:bg-primary/5'}`}>
@@ -202,7 +232,7 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                             );
                         })}
 
-                        {currentQuestion.type === "Checkbox" && currentQuestion.options?.map((opt: any, i: number) => {
+                        {currentQuestion?.type === "checkbox" && currentQuestion.options?.map((opt: any, i: number) => {
                             const selectedIds = getAnswerForCurrentQuestion()?.selectedOptionIds || [];
                             const isChecked = selectedIds.includes(opt.id);
                             return (
@@ -223,7 +253,7 @@ export default function ExamSessionPage({ params }: { params: { id: string } }) 
                             );
                         })}
 
-                        {currentQuestion.type === "Text" && (
+                        {currentQuestion?.type === "text" && (
                             <TextEditor 
                                 value={getAnswerForCurrentQuestion()?.answerText || ""}
                                 onChange={(val) => handleAnswerUpdate(currentQuestion.id, val, undefined)}

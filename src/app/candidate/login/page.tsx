@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -33,10 +34,9 @@ export default function CandidateLogin() {
         setApiError(null);
         try {
             const response = await axiosInstance.post('/auth/login', data);
-            
             const token = response.data?.access_token || response.data?.accessToken;
             const user = response.data?.user;
-            
+
             if (token) {
                 setToken(token);
                 if (user) {
@@ -44,7 +44,6 @@ export default function CandidateLogin() {
                 } else {
                     setUser({ role: 'candidate', email: data.email } as any);
                 }
-
                 router.push('/candidate/dashboard');
             } else {
                 setApiError("Invalid response: Token missing");
@@ -57,71 +56,92 @@ export default function CandidateLogin() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#F9FAFB] font-inter">
-            <div className="flex-1 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-xl w-full max-w-[420px] p-8 border border-gray-100">
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-primary/30 mb-4">
-                            AR
+        <div className="min-h-screen flex flex-col bg-[#F8F9FC] font-inter">
+            <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-primary/10 h-16">
+                <div className="max-w-7xl mx-auto px-6 h-full flex items-center relative">
+                    <div className="flex-shrink-0">
+                        <Image
+                            src="/Logo.png"
+                            alt="Akij Resource Logo"
+                            width={120}
+                            height={30}
+                        />
+                    </div>
+
+                    <div className="absolute left-1/2 -translate-x-1/2">
+                        <h1 className="text-lg md:text-xl font-semibold text-[#334155] whitespace-nowrap">
+                            Akij Resource
+                        </h1>
+                    </div>
+                </div>
+            </header>
+
+            <main className="flex-1 flex flex-col items-center justify-center p-6">
+                <h2 className="text-2xl font-semibold text-[#334155] mb-8">Sign In</h2>
+
+                <div className="bg-white rounded-3xl shadow-[0px_4px_24px_rgba(0,0,0,0.04)] w-full max-w-[500px] p-10 border border-gray-100 relative overflow-hidden">
+                    <div className="absolute top-0 right-0">
+                        <div className="bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-bl-xl border-l border-b border-blue-100">
+                            Candidate Portal
                         </div>
-                        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Akij Resource</h1>
-                        <p className="text-gray-500 mt-2 text-sm">Sign In to Candidate Portal</p>
                     </div>
 
                     {apiError && (
-                        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-sm text-red-700">
+                        <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 text-sm text-red-700">
                             {apiError}
                         </div>
                     )}
 
-                    <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+                    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
                         <div>
                             <Controller
                                 name="email"
                                 control={control}
                                 render={({ field }) => (
-                                    <InputField 
+                                    <InputField
                                         {...field}
-                                        type="email" 
-                                        label="Email"
-                                        placeholder="name@example.com"
+                                        type="email"
+                                        label="Email/ User ID"
+                                        placeholder="Enter your email/User ID"
                                         message={errors.email?.message}
                                     />
                                 )}
                             />
                         </div>
-                        
+
                         <div>
                             <Controller
                                 name="password"
                                 control={control}
                                 render={({ field }) => (
-                                    <InputField 
+                                    <InputField
                                         {...field}
-                                        type="password" 
+                                        type="password"
                                         label="Password"
-                                        placeholder="••••••••"
+                                        placeholder="Enter your password"
                                         message={errors.password?.message}
                                     />
                                 )}
                             />
-                            <div className="flex justify-end mt-2">
-                                <Link href="#" className="text-sm font-medium text-primary hover:text-primary-dark transition-colors cursor-pointer">
-                                    Forgot Password?
-                                </Link>
-                            </div>
                         </div>
 
-                        <button 
-                            type="submit" 
+                        <div className="flex justify-end !mt-2">
+                            <Link href="#" className="text-sm font-medium text-[#475467] hover:text-primary transition-colors cursor-pointer">
+                                Forget Password?
+                            </Link>
+                        </div>
+
+                        <button
+                            type="submit"
                             disabled={isLoading}
-                            className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow-md shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-70 flex justify-center cursor-pointer"
+                            className="w-full py-2 bg-[#6366F1] hover:bg-[#5558e6] text-white font-semibold rounded-xl shadow-lg shadow-indigo-100 transition-all active:scale-[0.98] disabled:opacity-70 flex justify-center cursor-pointer mt-4"
                         >
-                            {isLoading ? "Logging in..." : "Login"}
+                            {isLoading ? "Signing in..." : "Sign In"}
                         </button>
                     </form>
                 </div>
-            </div>
+            </main>
+
             <Footer />
         </div>
     );
