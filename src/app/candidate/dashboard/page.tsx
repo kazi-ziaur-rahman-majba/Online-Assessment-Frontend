@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CandidateExamCard from '@/components/candidate/ExamCard';
@@ -10,10 +10,17 @@ import { Loader2, Search } from 'lucide-react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { axiosInstance } from '@/lib/axios';
 
-export default function CandidateDashboard() {
+function CandidateDashboardContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
     const searchQuery = searchParams.get('search') || '';
     
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const { data: examsData, isLoading, isError } = useQuery({
         queryKey: ['candidate-exams'],
         queryFn: async () => {
@@ -31,18 +38,21 @@ export default function CandidateDashboard() {
     }, [examsList, searchQuery]);
 
     const updateSearch = (value: string) => {
-        const url = new URL(window.location.href);
+        if (!isMounted) return;
+        const params = new URLSearchParams(searchParams.toString());
         if (value) {
-            url.searchParams.set('search', value);
+            params.set('search', value);
         } else {
-            url.searchParams.delete('search');
+            params.delete('search');
         }
-        window.history.pushState({}, '', url.toString());
-        window.dispatchEvent(new Event('popstate'));
+        router.replace(`${pathname}?${params.toString()}`);
     };
 
+    if (!isMounted) {
+        return null;
+    }
+
     return (
-        <ProtectedRoute allowedRoles={['candidate']} loginPath="/candidate/login">
         <div className="min-h-screen flex flex-col bg-[#F9FAFB] font-inter">
             <Navbar />
             
@@ -100,6 +110,20 @@ export default function CandidateDashboard() {
 
             <Footer />
         </div>
+    );
+}
+
+export default function CandidateDashboard() {
+    return (
+        <ProtectedRoute allowedRoles={['candidate']} loginPath="/candidate/login">
+            <Suspense fallback={
+                <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+            }>
+                <CandidateDashboardContent />
+            </Suspense>
         </ProtectedRoute>
     );
 }
+
