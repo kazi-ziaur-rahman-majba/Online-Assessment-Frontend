@@ -256,21 +256,18 @@ export default function CreateExamPage() {
                                     )} />
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <Controller name="startTime" control={control} render={({ field }) => (
                                         <InputField {...field} type="datetime-local" label="Start Time" message={errors.startTime?.message} />
                                     )} />
                                     <Controller name="endTime" control={control} render={({ field }) => (
                                         <InputField {...field} type="datetime-local" label="End Time" message={errors.endTime?.message} />
                                     )} />
+                                    <Controller name="duration" control={control} render={({ field }) => (
+                                        <InputField {...field} type="number" label="Duration (in minutes)" placeholder="Enter minutes" message={errors.duration?.message} />
+                                    )} />
                                 </div>
-                                <p className="text-[10px] md:text-xs text-gray-500 italic -mt-4 mb-4">
-                                    * Please enter times in UTC+6 (Bangladesh Standard Time).
-                                </p>
-
-                                <Controller name="duration" control={control} render={({ field }) => (
-                                    <InputField {...field} type="number" wrapperClass="md:w-1/2" label="Duration (in minutes)" placeholder="Enter minutes" message={errors.duration?.message} />
-                                )} />
+                                
 
                                 <div className="flex justify-end pt-4">
                                     <button type="submit" disabled={isCreatingExam} className="bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-medium transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2 cursor-pointer">
