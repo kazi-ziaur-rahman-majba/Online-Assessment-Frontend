@@ -1,9 +1,10 @@
 "use client";
 
+import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { Clock, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { Clock, CheckCircle2, AlertTriangle, Loader2, X } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -23,6 +24,7 @@ export default function ExamSessionPage() {
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const [answers, setAnswers] = useState<any[]>([]);
+    const [showQuestionNav, setShowQuestionNav] = useState(false);
     
     // Hydration fix
     const [isMounted, setIsMounted] = useState(false);
@@ -175,15 +177,63 @@ export default function ExamSessionPage() {
                 {/* Status Bar */}
                 <div className="w-full max-w-[850px] mx-auto pt-8 px-6">
                     <div className="bg-white rounded-2xl p-3.5 flex justify-between items-center border border-gray-100 shadow-sm">
-                        <span className="text-lg font-bold text-[#344054]">
-                            Question ({currentQuestionIdx + 1}/{questions.length})
-                        </span>
+                        <div className="flex items-center gap-4">
+                            <span className="text-lg font-bold text-[#344054]">
+                                Question ({currentQuestionIdx + 1}/{questions.length})
+                            </span>
+                            <button 
+                                onClick={() => setShowQuestionNav(!showQuestionNav)}
+                                className="px-3 py-1.5 text-sm font-medium text-[#6941C6] border border-[#6941C6] rounded-lg hover:bg-[#F9F5FF] transition-colors"
+                            >
+                                All Questions
+                            </button>
+                        </div>
                         <div className="flex items-center gap-2 bg-[#F2F4F7] px-4 py-1.5 rounded-xl font-bold text-[#344054]">
                             <Clock className="w-5 h-5" />
                             {formatTime(timeLeft)}
                         </div>
                     </div>
                 </div>
+
+                {/* Question Navigation Panel */}
+                {showQuestionNav && (
+                    <div className="w-full max-w-[850px] mx-auto px-6 py-4">
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-base font-bold text-gray-900">All Questions</h3>
+                                <button onClick={() => setShowQuestionNav(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                                {questions.map((q: any, idx: number) => {
+                                    const answer = answers.find(a => a.questionId === q.id);
+                                    const hasAnswer = answer && (answer.answerText || (answer.selectedOptionIds && answer.selectedOptionIds.length > 0));
+                                    const isCurrent = idx === currentQuestionIdx;
+                                    
+                                    return (
+                                        <button
+                                            key={q.id}
+                                            onClick={() => {
+                                                setCurrentQuestionIdx(idx);
+                                                setShowQuestionNav(false);
+                                            }}
+                                            className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                                                isCurrent 
+                                                    ? 'bg-[#6941C6] text-white' 
+                                                    : hasAnswer 
+                                                        ? 'bg-green-100 text-green-700 border border-green-200' 
+                                                        : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'
+                                            }`}
+                                        >
+                                            Q{idx + 1}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Main Card */}
                 <main className="flex-1 w-full max-w-[850px] mx-auto px-4 py-6">
@@ -274,24 +324,24 @@ export default function ExamSessionPage() {
                     </div>
                 </Modal>
 
-                <Modal isOpen={isSuccessModalOpen} onClose={() => {}} maxWidth="max-w-md">
-                    <div className="flex flex-col items-center p-6 text-center">
-                        <CheckCircle2 className="w-20 h-20 text-green-500 mb-6" />
+                <Modal isOpen={isSuccessModalOpen} onClose={() => {}} maxWidth="max-w-3xl">
+                    <div className="flex flex-col items-center p-5 text-center">
+                        <Image src="/success.png" alt="Success" width={46} height={46} className='mb-3.5' />
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">Test Completed</h2>
-                        <p className="text-gray-500 mb-8">You have successfully submitted your exam. Your responses have been saved.</p>
+                        <p className="text-gray-500 mb-5">You have successfully submitted your exam. Your responses have been saved.</p>
                         <Link href="/candidate/dashboard" className="w-full">
-                            <button className="w-full py-3 bg-[#6941C6] text-white rounded-lg font-medium">Back to Dashboard</button>
+                            <button className="w-full py-3 bg-[#6941C6] cursor-pointer text-white rounded-lg font-medium">Back to Dashboard</button>
                         </Link>
                     </div>
                 </Modal>
 
-                <Modal isOpen={isTimeoutModalOpen} onClose={() => {}} maxWidth="max-w-md">
-                    <div className="flex flex-col items-center p-6 text-center">
-                        <AlertTriangle className="w-20 h-20 text-orange-500 mb-6" />
+                <Modal isOpen={isTimeoutModalOpen} onClose={() => {}} maxWidth="max-w-3xl">
+                    <div className="flex flex-col items-center p-5 text-center">
+                        <Image src="/time.png" alt="Timeout" width={46} height={46} className='mb-3.5' />
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">Timeout!</h2>
-                        <p className="text-gray-500 mb-8">Unfortunately you ran out of time. Your responses up to this point have been submitted.</p>
+                        <p className="text-gray-500 mb-5">Unfortunately you ran out of time. Your responses up to this point have been submitted.</p>
                         <Link href="/candidate/dashboard" className="w-full">
-                            <button className="w-full py-3 bg-[#6941C6] text-white rounded-lg font-medium">Back to Dashboard</button>
+                            <button className="w-full py-3 bg-[#6941C6] text-white cursor-pointer rounded-lg font-medium">Back to Dashboard</button>
                         </Link>
                     </div>
                 </Modal>

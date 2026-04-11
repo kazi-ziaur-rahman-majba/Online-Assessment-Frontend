@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Plus, PencilLine, Trash2, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, PencilLine, Trash2, X, Loader2, CheckCircle2, FileText } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,13 +19,13 @@ import { showToast } from '@/utils/toast-utils';
 
 const step1Schema = z.object({
     title: z.string().min(1, "Title is required"),
-    totalCandidates: z.coerce.number().positive("Must be a positive number"),
-    totalSlots: z.coerce.number().positive("Must be a positive number"),
-    questionSets: z.coerce.number().positive("Must be a positive number"),
+    totalCandidates: z.coerce.number().min(1, "Must be at least 1"),
+    totalSlots: z.coerce.number().min(1, "Must be at least 1"),
+    questionSets: z.coerce.number().min(1, "Must be at least 1"),
     questionType: z.string().min(1, "Question type is required"),
     startTime: z.string().min(1, "Start time is required"),
     endTime: z.string().min(1, "End time is required"),
-    duration: z.coerce.number().positive("Must be a positive number"),
+    duration: z.coerce.number().min(1, "Must be at least 1 minute"),
 }).refine((data) => new Date(data.endTime) > new Date(data.startTime), {
     message: "End time must be after start time",
     path: ["endTime"],
@@ -59,18 +59,20 @@ export default function EditExamPage() {
     const [questionTitle, setQuestionTitle] = useState("");
     const [options, setOptions] = useState([{ id: Date.now(), text: '', isCorrect: false }]);
     const [isSavingQuestion, setIsSavingQuestion] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
 
     const { control, handleSubmit, reset, formState: { errors } } = useForm<Step1FormValues>({
         resolver: zodResolver(step1Schema),
         defaultValues: {
             title: '',
-            totalCandidates: 0,
-            totalSlots: 0,
-            questionSets: 0,
+            totalCandidates: undefined,
+            totalSlots: undefined,
+            questionSets: undefined,
             questionType: 'mixed',
             startTime: '',
             endTime: '',
-            duration: 0
+            duration: undefined
         }
     });
 
@@ -176,15 +178,22 @@ export default function EditExamPage() {
         }
     };
 
-    const deleteQuestion = async (id: string) => {
-        if (!window.confirm("Are you sure you want to delete this question?")) return;
+    const deleteQuestion = async () => {
+        if (!questionToDelete) return;
         try {
-            await axiosInstance.delete(`/questions/${id}`);
+            await axiosInstance.delete(`/questions/${questionToDelete}`);
             queryClient.invalidateQueries({ queryKey: ['exam-questions', id] });
             showToast('success', 'Question deleted');
+            setIsDeleteModalOpen(false);
+            setQuestionToDelete(null);
         } catch (error) {
             showToast('error', 'Failed to delete question');
         }
+    };
+
+    const openDeleteModal = (id: string) => {
+        setQuestionToDelete(id);
+        setIsDeleteModalOpen(true);
     };
 
     const openEditModal = (q: any) => {
@@ -256,12 +265,12 @@ export default function EditExamPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <Controller name="totalCandidates" control={control} render={({ field }) => (
-                                            <InputField {...field} type="number" label="Total Candidates" placeholder="100" message={errors.totalCandidates?.message} />
+                                            <InputField {...field} type="number" label="Total Candidates" placeholder="Enter number" message={errors.totalCandidates?.message} />
                                         )} />
                                     </div>
                                     <div>
                                         <Controller name="totalSlots" control={control} render={({ field }) => (
-                                            <InputField {...field} type="number" label="Total Slots" placeholder="2" message={errors.totalSlots?.message} />
+                                            <InputField {...field} type="number" label="Total Slots" placeholder="Enter number" message={errors.totalSlots?.message} />
                                         )} />
                                     </div>
                                 </div>
@@ -269,7 +278,7 @@ export default function EditExamPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <Controller name="questionSets" control={control} render={({ field }) => (
-                                            <InputField {...field} type="number" label="Question Sets" placeholder="3" message={errors.questionSets?.message} />
+                                            <InputField {...field} type="number" label="Question Sets" placeholder="Enter number" message={errors.questionSets?.message} />
                                         )} />
                                     </div>
                                     <div>
@@ -303,7 +312,7 @@ export default function EditExamPage() {
 
                                 <div>
                                     <Controller name="duration" control={control} render={({ field }) => (
-                                        <InputField {...field} type="number" wrapperClass="md:w-1/2" label="Duration (in minutes)" placeholder="60" message={errors.duration?.message} />
+                                        <InputField {...field} type="number" wrapperClass="md:w-1/2" label="Duration (in minutes)" placeholder="Enter minutes" message={errors.duration?.message} />
                                     )} />
                                 </div>
 
@@ -328,23 +337,54 @@ export default function EditExamPage() {
                                     {questionsLoading ? (
                                         <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                                     ) : questions.length === 0 ? (
-                                        <div className="text-center py-10 text-gray-500">No questions added yet.</div>
+                                        <div className="text-center py-10 text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">No questions added yet.</div>
                                     ) : (
                                         questions.map((q: any, index: number) => (
-                                            <div key={q.id} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                                                <div className="flex items-center gap-4">
-                                                    <span className="text-sm font-bold text-gray-500 w-8">Q{index + 1}.</span>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-800">{q.title}</p>
-                                                        <span className="inline-block mt-1 px-2 py-0.5 bg-gray-200 text-gray-600 text-xs rounded-sm font-medium">Type: {q.type}</span>
+                                            <div key={q.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                                                {/* Header */}
+                                                <div className="px-6 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-sm font-bold text-gray-900">Question {index + 1}</span>
+                                                        <span className="px-2.5 py-0.5 bg-white border border-gray-200 text-gray-600 text-[10px] uppercase tracking-wider rounded-md font-bold">
+                                                            {q.type === 'radio' ? 'MCQ' : q.type === 'checkbox' ? 'Checkbox' : 'Text'}
+                                                        </span>
                                                     </div>
+                                                    <div className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-1 rounded">1 pt</div>
                                                 </div>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => openEditModal(q)} className="p-2 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-md transition-colors cursor-pointer">
-                                                        <PencilLine className="w-4 h-4" />
+
+                                                {/* Content */}
+                                                <div className="p-6">
+                                                    <h3 className="text-base font-bold text-gray-900 mb-4">{q.title}</h3>
+
+                                                    {(q.type === 'radio' || q.type === 'checkbox') && q.options && (
+                                                        <div className="space-y-3">
+                                                            {q.options.map((opt: any, i: number) => (
+                                                                <div key={i} className={`flex items-center justify-between p-3 rounded-lg border transition-all ${opt.isCorrect ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-gray-100 text-gray-600'}`}>
+                                                                    <span className="text-sm font-medium">{String.fromCharCode(65 + i)}. {opt.text}</span>
+                                                                    {opt.isCorrect && <CheckCircle2 className="w-5 h-5 text-green-500 fill-green-500/10" />}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {q.type === 'text' && (
+                                                        <div className="flex gap-3 text-sm text-gray-500 leading-relaxed border border-gray-100 p-4 rounded-lg bg-gray-50/50">
+                                                            <FileText className="w-5 h-5 text-gray-400 shrink-0" />
+                                                            <p>Text answer question</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Actions */}
+                                                <div className="px-6 py-3 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center">
+                                                    <button onClick={() => openEditModal(q)} className="text-primary text-sm font-bold hover:text-primary-dark transition-colors flex items-center gap-1 cursor-pointer">
+                                                        <PencilLine className="w-3.5 h-3.5" /> Edit
                                                     </button>
-                                                    <button onClick={() => deleteQuestion(q.id)} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors cursor-pointer">
-                                                        <Trash2 className="w-4 h-4" />
+                                                    <button onClick={() => openEditModal(q)} className="text-primary text-sm font-bold hover:text-primary-dark transition-colors flex items-center gap-1 cursor-pointer">
+                                                        <PencilLine className="w-3.5 h-3.5" /> Edit
+                                                    </button>
+                                                    <button onClick={() => openDeleteModal(q.id)} className="text-red-500 text-sm font-bold hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer">
+                                                        <Trash2 className="w-3.5 h-3.5" /> Remove From Exam
                                                     </button>
                                                 </div>
                                             </div>
@@ -435,6 +475,16 @@ export default function EditExamPage() {
                             <button disabled={isSavingQuestion} onClick={saveQuestion} className="px-5 py-2 bg-primary text-white rounded-md hover:bg-primary-dark font-medium text-sm transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2 cursor-pointer">
                                 {isSavingQuestion && <Loader2 className="w-4 h-4 animate-spin" />} Save Question
                             </button>
+                        </div>
+                    </div>
+                </Modal>
+
+                <Modal isOpen={isDeleteModalOpen} onClose={() => { setIsDeleteModalOpen(false); setQuestionToDelete(null); }} title="Delete Question">
+                    <div className="space-y-4">
+                        <p className="text-gray-600">Are you sure you want to delete this question? This action cannot be undone.</p>
+                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                            <button onClick={() => { setIsDeleteModalOpen(false); setQuestionToDelete(null); }} className="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
+                            <button onClick={deleteQuestion} className="px-5 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 font-medium">Delete</button>
                         </div>
                     </div>
                 </Modal>

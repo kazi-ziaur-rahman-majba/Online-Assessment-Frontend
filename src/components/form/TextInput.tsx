@@ -2,7 +2,7 @@ import React, { ChangeEvent } from "react";
 
 interface InputFieldProps {
   label?: string;
-  value?: string;
+  value?: string | number;
   name?: string;
   placeholder?: string;
   type?: string;
@@ -18,7 +18,7 @@ interface InputFieldProps {
 
 const InputField: React.FC<InputFieldProps> = ({
   label,
-  value = "",
+  value,
   name,
   type = "text",
   inputClass = "",

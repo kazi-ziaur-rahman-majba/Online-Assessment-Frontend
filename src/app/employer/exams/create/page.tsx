@@ -22,13 +22,13 @@ import { showToast } from '@/utils/toast-utils';
 
 const step1Schema = z.object({
     title: z.string().min(1, "Title is required"),
-    totalCandidates: z.coerce.number().positive("Must be a positive number"),
-    totalSlots: z.coerce.number().positive("Must be a positive number"),
-    questionSets: z.coerce.number().positive("Must be a positive number"),
+    totalCandidates: z.coerce.number().min(1, "Must be at least 1"),
+    totalSlots: z.coerce.number().min(1, "Must be at least 1"),
+    questionSets: z.coerce.number().min(1, "Must be at least 1"),
     questionType: z.string().min(1, "Question type is required"),
     startTime: z.string().min(1, "Start time is required"),
     endTime: z.string().min(1, "End time is required"),
-    duration: z.coerce.number().positive("Must be a positive number"),
+    duration: z.coerce.number().min(1, "Must be at least 1 minute"),
 }).refine((data) => new Date(data.endTime) > new Date(data.startTime), {
     message: "End time must be after start time",
     path: ["endTime"],
@@ -50,18 +50,20 @@ export default function CreateExamPage() {
     const [questionTitle, setQuestionTitle] = useState("");
     const [options, setOptions] = useState([{ id: Date.now(), text: '', isCorrect: false }]);
     const [isSavingQuestion, setIsSavingQuestion] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
 
     const { control, handleSubmit, formState: { errors } } = useForm<Step1FormValues>({
         resolver: zodResolver(step1Schema),
         defaultValues: {
             title: '',
-            totalCandidates: 0,
-            totalSlots: 0,
-            questionSets: 0,
+            totalCandidates: undefined,
+            totalSlots: undefined,
+            questionSets: undefined,
             questionType: 'mixed',
             startTime: '',
             endTime: '',
-            duration: 0
+            duration: undefined
         }
     });
 
@@ -141,15 +143,22 @@ export default function CreateExamPage() {
         }
     };
 
-    const deleteQuestion = async (id: string) => {
-        if (!window.confirm("Are you sure you want to delete this question?")) return;
+    const deleteQuestion = async () => {
+        if (!questionToDelete) return;
         try {
-            await axiosInstance.delete(`/questions/${id}`);
+            await axiosInstance.delete(`/questions/${questionToDelete}`);
             queryClient.invalidateQueries({ queryKey: ['exam-questions', examId] });
             showToast('success', 'Question deleted');
+            setIsDeleteModalOpen(false);
+            setQuestionToDelete(null);
         } catch (error) {
             showToast('error', 'Failed to delete question');
         }
+    };
+
+    const openDeleteModal = (id: string) => {
+        setQuestionToDelete(id);
+        setIsDeleteModalOpen(true);
     };
 
     const openEditModal = (q: any) => {
@@ -210,16 +219,16 @@ export default function CreateExamPage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <Controller name="totalCandidates" control={control} render={({ field }) => (
-                                        <InputField {...field} type="number" label="Total Candidates" placeholder="100" message={errors.totalCandidates?.message} />
+                                        <InputField {...field} type="number" label="Total Candidates" placeholder="Enter number" message={errors.totalCandidates?.message} />
                                     )} />
                                     <Controller name="totalSlots" control={control} render={({ field }) => (
-                                        <InputField {...field} type="number" label="Total Slots" placeholder="2" message={errors.totalSlots?.message} />
+                                        <InputField {...field} type="number" label="Total Slots" placeholder="Enter number" message={errors.totalSlots?.message} />
                                     )} />
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <Controller name="questionSets" control={control} render={({ field }) => (
-                                        <InputField {...field} type="number" label="Question Sets" placeholder="3" message={errors.questionSets?.message} />
+                                        <InputField {...field} type="number" label="Question Sets" placeholder="Enter number" message={errors.questionSets?.message} />
                                     )} />
                                     <Controller name="questionType" control={control} render={({ field: { onChange, value } }) => (
                                         <SelectInput
@@ -245,7 +254,7 @@ export default function CreateExamPage() {
                                 </div>
 
                                 <Controller name="duration" control={control} render={({ field }) => (
-                                    <InputField {...field} type="number" wrapperClass="md:w-1/2" label="Duration (in minutes)" placeholder="60" message={errors.duration?.message} />
+                                    <InputField {...field} type="number" wrapperClass="md:w-1/2" label="Duration (in minutes)" placeholder="Enter minutes" message={errors.duration?.message} />
                                 )} />
 
                                 <div className="flex justify-end pt-4">
@@ -312,7 +321,7 @@ export default function CreateExamPage() {
                                                     <button onClick={() => openEditModal(q)} className="text-primary text-sm font-bold hover:text-primary-dark transition-colors flex items-center gap-1 cursor-pointer">
                                                         <PencilLine className="w-3.5 h-3.5" /> Edit
                                                     </button>
-                                                    <button onClick={() => deleteQuestion(q.id)} className="text-red-500 text-sm font-bold hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer">
+                                                    <button onClick={() => openDeleteModal(q.id)} className="text-red-500 text-sm font-bold hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer">
                                                         <Trash2 className="w-3.5 h-3.5" /> Remove From Exam
                                                     </button>
                                                 </div>
@@ -398,6 +407,16 @@ export default function CreateExamPage() {
                             <button disabled={isSavingQuestion} onClick={saveQuestion} className="px-5 py-2 bg-primary text-white rounded-md hover:bg-primary-dark font-medium text-sm transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2 cursor-pointer">
                                 {isSavingQuestion && <Loader2 className="w-4 h-4 animate-spin" />} Save Question
                             </button>
+                        </div>
+                    </div>
+                </Modal>
+
+                <Modal isOpen={isDeleteModalOpen} onClose={() => { setIsDeleteModalOpen(false); setQuestionToDelete(null); }} title="Delete Question">
+                    <div className="space-y-4">
+                        <p className="text-gray-600">Are you sure you want to delete this question? This action cannot be undone.</p>
+                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                            <button onClick={() => { setIsDeleteModalOpen(false); setQuestionToDelete(null); }} className="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
+                            <button onClick={deleteQuestion} className="px-5 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 font-medium">Delete</button>
                         </div>
                     </div>
                 </Modal>

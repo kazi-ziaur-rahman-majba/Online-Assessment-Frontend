@@ -81,16 +81,19 @@ export default function CandidateDashboard() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredExams.map((exam: any) => (
-                            <CandidateExamCard 
-                                key={exam.id}
-                                examId={exam.id}
-                                title={exam.title}
-                                duration={`${exam.duration || 60} min`}
-                                questions={`${exam.questionCount || 0} Questions`}
-                                negativeMarking={exam.negativeMarking ? 'Yes' : 'No'}
-                            />
-                        ))}
+                        {filteredExams.map((exam: any) => {
+                            const qCount = exam.totalQuestions ?? exam.questionCount ?? exam.questions ?? 0;
+                            return (
+                                <CandidateExamCard 
+                                    key={exam.id}
+                                    examId={exam.id}
+                                    title={exam.title}
+                                    duration={exam.duration ? `${exam.duration} min` : 'N/A'}
+                                    questions={qCount > 0 ? `${qCount} Questions` : 'N/A'}
+                                    negativeMarking={exam.negativeMarking ? 'Yes' : 'No'}
+                                />
+                            );
+                        })}
                     </div>
                 )}
             </main>

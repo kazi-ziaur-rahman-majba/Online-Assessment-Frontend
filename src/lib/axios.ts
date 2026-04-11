@@ -2,7 +2,7 @@ import axios from "axios";
 import { getToken, clearAuth, getRole } from "./auth";
 
 export const axiosInstance = axios.create({
-    baseURL: "http://localhost:5000",
+    baseURL: process.env.NEXT_PUBLIC_API_URL,
     timeout: 15000,
 });
 
