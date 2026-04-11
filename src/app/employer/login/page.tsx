@@ -11,6 +11,7 @@ import Footer from '@/components/layout/Footer';
 import InputField from '@/components/form/TextInput';
 import { axiosInstance } from '@/lib/axios';
 import { setToken, setUser } from '@/lib/auth';
+import { showToast } from '@/utils/toast-utils';
 
 const loginSchema = z.object({
     email: z.string().email({ message: "Invalid email address" }),
@@ -44,12 +45,17 @@ export default function EmployerLogin() {
                 } else {
                     setUser({ role: 'employer', email: data.email } as any);
                 }
+                showToast("success", "Login successful!");
                 router.push('/employer/dashboard');
             } else {
-                setApiError("Invalid response: Token missing");
+                const msg = "Invalid response: Token missing";
+                setApiError(msg);
+                showToast("error", msg);
             }
         } catch (error: any) {
-            setApiError(error.response?.data?.message || error.message || "Failed to login");
+            const msg = error.response?.data?.message || error.message || "Failed to login";
+            setApiError(msg);
+            showToast("error", msg);
         } finally {
             setIsLoading(false);
         }
@@ -59,18 +65,19 @@ export default function EmployerLogin() {
         <div className="min-h-screen flex flex-col bg-[#F9FAFB] font-inter">
             {/* Header */}
             <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-primary/10 h-16">
-                <div className="max-w-7xl mx-auto px-6 h-full flex items-center relative">
+                <div className="max-w-7xl mx-auto px-2 md:px-6 h-full flex items-center relative">
                     <div className="flex-shrink-0">
                         <Image
                             src="/Logo.png"
                             alt="Akij Resource Logo"
                             width={120}
                             height={30}
+                            className="w-16 sm:w-20 md:w-[120px] h-auto"
                         />
                     </div>
 
                     <div className="absolute left-1/2 -translate-x-1/2">
-                        <h1 className="text-lg md:text-xl font-semibold text-[#334155] whitespace-nowrap">
+                        <h1 className="text-base md:text-xl font-semibold text-[#334155] whitespace-nowrap">
                             Akij Resource
                         </h1>
                     </div>
@@ -88,6 +95,15 @@ export default function EmployerLogin() {
                             Employer Portal
                         </div>
                     </div>
+
+                    <div className="mb-6 p-2 bg-green-50/50 rounded-xl border border-green-100">
+                        <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">Demo Credentials</p>
+                        <div className="flex flex-col gap-1 text-sm text-green-800">
+                            <p><span className="font-semibold">Email:</span> employer@gmail.com</p>
+                            <p><span className="font-semibold">Password:</span> 123456</p>
+                        </div>
+                    </div>
+
                     {apiError && (
                         <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 text-sm text-red-700">
                             {apiError}

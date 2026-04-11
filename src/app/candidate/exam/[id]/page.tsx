@@ -299,8 +299,9 @@ export default function ExamSessionPage() {
                         {/* Actions */}
                         <div className="flex flex-col md:flex-row gap-4 md:gap-0 justify-between items-center pt-4 border-t border-gray-100">
                             <button
-                                onClick={() => setCurrentQuestionIdx(prev => Math.max(0, prev - 1))}
-                                className="w-full md:w-auto px-4 py-2 md:px-6 md:py-2.5 border border-gray-200 cursor-pointer rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-all"
+                                onClick={() => setCurrentQuestionIdx(prev => Math.min(questions.length - 1, prev + 1))}
+                                disabled={isLastQuestion}
+                                className="w-full md:w-auto px-4 py-2 md:px-6 md:py-2.5 border border-gray-200 cursor-pointer rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Skip this Question
                             </button>

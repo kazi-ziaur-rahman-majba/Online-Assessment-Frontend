@@ -23,7 +23,7 @@ export default function Navbar() {
 
 	return (
 		<nav className="bg-primary-dark text-white px-6 py-4 flex items-center justify-between shadow-md">
-			<Image src="/Logo.png" alt="Logo" width={150} height={150} />
+			<Image src="/Logo.png" alt="Logo" width={150} height={150} className="w-16 sm:w-20 md:w-[120px] h-auto" />
 			
 			<div className="flex items-center gap-4">
 				{user && (

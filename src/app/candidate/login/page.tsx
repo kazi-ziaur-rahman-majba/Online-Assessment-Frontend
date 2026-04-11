@@ -11,6 +11,7 @@ import Footer from '@/components/layout/Footer';
 import InputField from '@/components/form/TextInput';
 import { axiosInstance } from '@/lib/axios';
 import { setToken, setUser } from '@/lib/auth';
+import { showToast } from '@/utils/toast-utils';
 
 const loginSchema = z.object({
     email: z.string().email({ message: "Invalid email address" }),
@@ -44,12 +45,17 @@ export default function CandidateLogin() {
                 } else {
                     setUser({ role: 'candidate', email: data.email } as any);
                 }
+                showToast("success", "Login successful!");
                 router.push('/candidate/dashboard');
             } else {
-                setApiError("Invalid response: Token missing");
+                const msg = "Invalid response: Token missing";
+                setApiError(msg);
+                showToast("error", msg);
             }
         } catch (error: any) {
-            setApiError(error.response?.data?.message || error.message || "Failed to login");
+            const msg = error.response?.data?.message || error.message || "Failed to login";
+            setApiError(msg);
+            showToast("error", msg);
         } finally {
             setIsLoading(false);
         }
@@ -58,23 +64,25 @@ export default function CandidateLogin() {
     return (
         <div className="min-h-screen flex flex-col bg-[#F8F9FC] font-inter">
             <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-primary/10 h-16">
-                <div className="max-w-7xl mx-auto px-6 h-full flex items-center relative">
-                    <div className="flex-shrink-0">
-                        <Image
-                            src="/Logo.png"
-                            alt="Akij Resource Logo"
-                            width={120}
-                            height={30}
-                        />
-                    </div>
+    <div className="max-w-7xl mx-auto px-4 md:px-6 h-full flex items-center relative">
+        <div className="flex-shrink-0">
+            <Image
+                src="/Logo.png"
+                alt="Akij Resource Logo"
+                width={120}
+                height={30}
+                // এখানে w-20 (80px) ছোট ডিভাইসের জন্য এবং md:w-[120px] বড় ডিভাইসের জন্য
+                className="w-20 sm:w-24 md:w-[120px] h-auto object-contain"
+            />
+        </div>
 
-                    <div className="absolute left-1/2 -translate-x-1/2">
-                        <h1 className="text-lg md:text-xl font-semibold text-[#334155] whitespace-nowrap">
-                            Akij Resource
-                        </h1>
-                    </div>
-                </div>
-            </header>
+        <div className="absolute left-1/2 -translate-x-1/2">
+            <h1 className="text-base md:text-xl font-semibold text-[#334155] whitespace-nowrap">
+                Akij Resource
+            </h1>
+        </div>
+    </div>
+</header>
 
             <main className="flex-1 flex flex-col items-center justify-center p-6">
                 <h2 className="text-2xl font-semibold text-[#334155] mb-8">Sign In</h2>
@@ -83,6 +91,14 @@ export default function CandidateLogin() {
                     <div className="absolute top-0 right-0">
                         <div className="bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-bl-xl border-l border-b border-blue-100">
                             Candidate Portal
+                        </div>
+                    </div>
+
+                    <div className="mb-6 p-2 bg-blue-50/50 rounded-xl border border-blue-100">
+                        <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">Demo Credentials</p>
+                        <div className="flex flex-col gap-1 text-sm text-blue-800">
+                            <p><span className="font-semibold">Email:</span> candidate@gmail.com</p>
+                            <p><span className="font-semibold">Password:</span> 123456</p>
                         </div>
                     </div>
 

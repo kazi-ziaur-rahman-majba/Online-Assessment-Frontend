@@ -14,14 +14,15 @@ export default function LandingPage() {
       <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-primary/10 h-16">
         <div className="max-w-7xl mx-auto px-6 h-full flex items-center relative">
           <div className="flex-shrink-0">
-            <Image 
-              src="/Logo.png" 
-              alt="Akij Resource Logo" 
-              width={120} 
-              height={30} 
+            <Image
+              src="/Logo.png"
+              alt="Akij Resource Logo"
+              width={120}
+              height={30}
+              className="w-16 sm:w-20 md:w-[120px] h-auto"
             />
           </div>
-          
+
           <div className="absolute left-1/2 -translate-x-1/2">
             <h1 className="text-lg md:text-xl font-semibold text-[#334155] whitespace-nowrap">
               Akij Resource
@@ -34,7 +35,7 @@ export default function LandingPage() {
         <div className="max-w-4xl w-full text-center space-y-12">
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            <div 
+            <div
               onClick={() => router.push("/employer/login")}
               className="flex flex-col items-center space-y-5 p-6 bg-white rounded-2xl shadow-md border border-primary/5 hover:border-primary/20 hover:shadow-xl transition-all duration-300 group cursor-pointer"
             >
@@ -52,7 +53,7 @@ export default function LandingPage() {
               />
             </div>
 
-            <div 
+            <div
               onClick={() => router.push("/candidate/login")}
               className="flex flex-col items-center space-y-5 p-6 bg-white rounded-2xl shadow-md border border-primary/5 cursor-pointer"
             >
@@ -74,19 +75,41 @@ export default function LandingPage() {
         </div>
       </main>
 
-      <footer className="bg-[#130b2c] text-gray-500 py-4 px-6 mt-auto border-t border-gray-200">
-			<div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-				<div className="flex items-center gap-2 text-sm">
-					<p className="text-white text-lg">Powered by</p>
-					<Image src="/footer.png" alt="Logo" width={150} height={120} />
-				</div>
-				<div className="flex items-center gap-6 text-sm text-white">
-					<p className="cursor-pointer">Helpline</p>
-					<p className="flex items-center gap-2 cursor-pointer"><PhoneCall className='text-md' style={{height: '17px', width: '17px'}} /><span>+88 011020202505</span></p>
-					<p className="flex items-center gap-2 cursor-pointer"><MailIcon className='text-md' style={{height: '17px', width: '17px'}} /><span>support@akij.work</span></p>
-				</div>
-			</div>
-		</footer>
+      <footer className="bg-[#130b2c] text-gray-500 py-4 px-2 md:px-6 mt-auto border-t border-gray-800">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+
+          <div className="flex items-center gap-3 text-sm order-2 md:order-1">
+            <p className="text-white text-base md:text-lg whitespace-nowrap">Powered by</p>
+            <div className="relative w-[100px]  md:w-[150px] md:h-[40px]">
+              <Image
+                src="/footer.png"
+                alt="Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center sm:flex-row gap-4 sm:gap-6 text-sm text-white order-1 md:order-2">
+            <p className="text-sm md:text-base text-white hidden md:block">Helpline</p>
+
+            <div className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition-colors">
+              <PhoneCall size={16} className="shrink-0" />
+              <span className="whitespace-nowrap text-xs md:text-sm">
+                +88011020202505
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition-colors">
+              <MailIcon size={16} className="shrink-0" />
+              <span className="whitespace-nowrap text-xs md:text-sm">
+                support@akij.work
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </footer>
     </div>
   );
 }
