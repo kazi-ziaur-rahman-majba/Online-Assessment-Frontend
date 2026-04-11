@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { Users, BookOpen, Clock, PencilLine, Trash2 } from 'lucide-react';
 import { axiosInstance } from '@/lib/axios';
 import { showToast } from '@/utils/toast-utils';
+import DeleteModal from '../modal/DeleteModal';
 
 interface ExamCardProps {
     title: string;
@@ -15,13 +16,14 @@ interface ExamCardProps {
 
 export default function ExamCard({ title, candidates, questionSets, slots, examId }: ExamCardProps) {
     const queryClient = useQueryClient();
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const handleDelete = async () => {
-        if (!window.confirm('Are you sure you want to delete this exam?')) return;
         try {
             await axiosInstance.delete(`/exams/${examId}`);
             queryClient.invalidateQueries({ queryKey: ['exams'] });
             showToast('success', 'Exam deleted successfully');
+            setIsDeleteModalOpen(false);
         } catch (error: any) {
             showToast('error', error.response?.data?.message || 'Failed to delete exam');
         }
@@ -35,7 +37,10 @@ export default function ExamCard({ title, candidates, questionSets, slots, examI
                     <Link href={`/employer/exams/${examId}/edit`} className="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-md transition-colors cursor-pointer">
                         <PencilLine className="w-4 h-4" />
                     </Link>
-                    <button onClick={handleDelete} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors cursor-pointer">
+                    <button 
+                        onClick={() => setIsDeleteModalOpen(true)} 
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+                    >
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
@@ -74,6 +79,14 @@ export default function ExamCard({ title, candidates, questionSets, slots, examI
                     </button>
                 </Link>
             </div>
+
+            <DeleteModal
+                isOpen={isDeleteModalOpen}
+                title="Delete Exam"
+                message={`Are you sure you want to delete "${title}"? This action cannot be undone.`}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onDelete={handleDelete}
+            />
         </div>
     );
 }
