@@ -16,18 +16,9 @@ export default function Navbar() {
     }, []);
 
     const handleLogout = () => {
-        const role = user?.role;
         clearAuth();
-        // Force state clear
         setUserState(null);
-        
-        if (role === 'employer') {
-            router.push('/employer/login');
-        } else if (role === 'candidate') {
-            router.push('/candidate/login');
-        } else {
-            router.push('/'); // Root landing page as fallback
-        }
+        router.push('/');
     };
 
 	return (
@@ -43,11 +34,11 @@ export default function Navbar() {
 				)}
 				<button 
                     onClick={handleLogout} 
-                    className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer group flex items-center gap-2" 
+                    className="p-2 text-black bg-primary rounded cursor-pointer flex items-center gap-2" 
                     title="Logout"
                 >
-					<LogOut className="w-5 h-5" />
-                    <span className="text-xs font-medium text-black opacity-0 group-hover:opacity-100 transition-opacity">Logout</span>
+					<LogOut className="w-5 h-5 text-white" />
+                    <span className="text-xs font-medium text-white">Logout</span>
 				</button>
 			</div>
 		</nav>

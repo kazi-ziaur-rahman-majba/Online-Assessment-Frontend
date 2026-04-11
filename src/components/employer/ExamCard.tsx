@@ -1,6 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
-import { Users, BookOpen, Clock } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Users, BookOpen, Clock, PencilLine, Trash2 } from 'lucide-react';
+import { axiosInstance } from '@/lib/axios';
+import { showToast } from '@/utils/toast-utils';
 
 interface ExamCardProps {
     title: string;
@@ -11,9 +14,32 @@ interface ExamCardProps {
 }
 
 export default function ExamCard({ title, candidates, questionSets, slots, examId }: ExamCardProps) {
+    const queryClient = useQueryClient();
+
+    const handleDelete = async () => {
+        if (!window.confirm('Are you sure you want to delete this exam?')) return;
+        try {
+            await axiosInstance.delete(`/exams/${examId}`);
+            queryClient.invalidateQueries({ queryKey: ['exams'] });
+            showToast('success', 'Exam deleted successfully');
+        } catch (error: any) {
+            showToast('error', error.response?.data?.message || 'Failed to delete exam');
+        }
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col hover:shadow-md transition-shadow">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">{title}</h3>
+            <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                <div className="flex gap-1">
+                    <Link href={`/employer/exams/${examId}/edit`} className="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-md transition-colors cursor-pointer">
+                        <PencilLine className="w-4 h-4" />
+                    </Link>
+                    <button onClick={handleDelete} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors cursor-pointer">
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
             
             <div className="flex gap-6 mb-6 flex-wrap">
                 <div className="flex flex-col gap-1">
@@ -42,11 +68,6 @@ export default function ExamCard({ title, candidates, questionSets, slots, examI
             </div>
 
             <div className="mt-auto flex justify-end gap-3">
-                <Link href={`/employer/exams/${examId}/edit`} className="cursor-pointer">
-                    <button className="px-4 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
-                        Edit
-                    </button>
-                </Link>
                 <Link href={`/employer/exams/${examId}/candidates`} className="cursor-pointer">
                     <button className="px-4 py-2 text-sm font-medium border border-primary text-primary rounded-md hover:bg-primary/5 transition-colors cursor-pointer">
                         View Candidates
