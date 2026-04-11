@@ -25,7 +25,7 @@ export default function ExamSessionPage() {
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const [answers, setAnswers] = useState<any[]>([]);
     const [showQuestionNav, setShowQuestionNav] = useState(false);
-    
+
     // Hydration fix
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => { setIsMounted(true); }, []);
@@ -42,14 +42,14 @@ export default function ExamSessionPage() {
         refetchOnWindowFocus: false,
     });
 
-    const questions = Array.isArray(fetchRes) 
-        ? fetchRes 
+    const questions = Array.isArray(fetchRes)
+        ? fetchRes
         : (fetchRes?.data?.questions || fetchRes?.questions || fetchRes?.data || []);
-    
-    const examData = Array.isArray(fetchRes) 
-        ? { questions: fetchRes, duration: 60 } 
+
+    const examData = Array.isArray(fetchRes)
+        ? { questions: fetchRes, duration: 60 }
         : (fetchRes?.data || fetchRes || {});
-    
+
     useEffect(() => {
         const duration = examData.duration || 60;
         if (duration && timeLeft === null) {
@@ -97,7 +97,7 @@ export default function ExamSessionPage() {
             const copy = [...prev];
             const existingIdx = copy.findIndex(a => a.questionId === questionId);
             const payload = { questionId, answerText, selectedOptionIds };
-            
+
             if (existingIdx >= 0) {
                 copy[existingIdx] = payload;
             } else {
@@ -175,23 +175,30 @@ export default function ExamSessionPage() {
                 <Navbar />
 
                 {/* Status Bar */}
-                <div className="w-full max-w-[850px] mx-auto pt-8 px-6">
-                    <div className="bg-white rounded-2xl p-3.5 flex justify-between items-center border border-gray-100 shadow-sm">
-                        <div className="flex items-center gap-4">
-                            <span className="text-lg font-bold text-[#344054]">
+                <div className="w-full max-w-[850px] mx-auto pt-4 md:pt-8 px-4 md:px-6">
+                    <div className="bg-white rounded-2xl p-3 md:p-4 flex flex-col sm:flex-row justify-between items-center gap-4 border border-gray-100 shadow-sm">
+
+                        {/* Left Side: Question Info & Navigation */}
+                        <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-3 md:gap-4">
+                            <span className="text-base md:text-lg font-bold text-[#344054] whitespace-nowrap">
                                 Question ({currentQuestionIdx + 1}/{questions.length})
                             </span>
-                            <button 
+                            <button
                                 onClick={() => setShowQuestionNav(!showQuestionNav)}
-                                className="px-3 py-1.5 text-sm font-medium text-[#6941C6] border border-[#6941C6] rounded-lg hover:bg-[#F9F5FF] transition-colors"
+                                className="px-2.5 py-1.5 md:px-3 md:py-1.5 text-xs md:text-sm font-medium text-[#6941C6] border border-[#6941C6] rounded-lg hover:bg-[#F9F5FF] transition-colors whitespace-nowrap"
                             >
                                 All Questions
                             </button>
                         </div>
-                        <div className="flex items-center gap-2 bg-[#F2F4F7] px-4 py-1.5 rounded-xl font-bold text-[#344054]">
-                            <Clock className="w-5 h-5" />
-                            {formatTime(timeLeft)}
+
+                        {/* Right Side: Timer */}
+                        <div className="flex items-center justify-center gap-2 bg-[#F2F4F7] w-full sm:w-auto px-4 py-2 sm:py-1.5 rounded-xl font-bold text-[#344054]">
+                            <Clock className="w-4 h-4 md:w-5 md:h-5" />
+                            <span className="text-sm md:text-base">
+                                {formatTime(timeLeft)}
+                            </span>
                         </div>
+
                     </div>
                 </div>
 
@@ -210,7 +217,7 @@ export default function ExamSessionPage() {
                                     const answer = answers.find(a => a.questionId === q.id);
                                     const hasAnswer = answer && (answer.answerText || (answer.selectedOptionIds && answer.selectedOptionIds.length > 0));
                                     const isCurrent = idx === currentQuestionIdx;
-                                    
+
                                     return (
                                         <button
                                             key={q.id}
@@ -218,13 +225,12 @@ export default function ExamSessionPage() {
                                                 setCurrentQuestionIdx(idx);
                                                 setShowQuestionNav(false);
                                             }}
-                                            className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                                                isCurrent 
-                                                    ? 'bg-[#6941C6] text-white' 
-                                                    : hasAnswer 
-                                                        ? 'bg-green-100 text-green-700 border border-green-200' 
+                                            className={`p-2 rounded-lg text-sm font-medium transition-all ${isCurrent
+                                                    ? 'bg-[#6941C6] text-white'
+                                                    : hasAnswer
+                                                        ? 'bg-green-100 text-green-700 border border-green-200'
                                                         : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'
-                                            }`}
+                                                }`}
                                         >
                                             Q{idx + 1}
                                         </button>
@@ -282,7 +288,7 @@ export default function ExamSessionPage() {
                             {/* --- TEXT AREA / SUBJECTIVE --- */}
                             {(currentQuestion?.type === "text" || currentQuestion?.type === "subjective") && (
                                 <div className="animate-in fade-in duration-500">
-                                    <TextEditor 
+                                    <TextEditor
                                         value={getAnswerForCurrentQuestion()?.answerText || ""}
                                         onChange={(val) => handleAnswerUpdate(currentQuestion.id, val, undefined)}
                                     />
@@ -291,17 +297,17 @@ export default function ExamSessionPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                            <button 
+                        <div className="flex flex-col md:flex-row gap-4 md:gap-0 justify-between items-center pt-4 border-t border-gray-100">
+                            <button
                                 onClick={() => setCurrentQuestionIdx(prev => Math.max(0, prev - 1))}
-                                className="px-6 py-2.5 border border-gray-200 cursor-pointer rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-all"
+                                className="w-full md:w-auto px-4 py-2 md:px-6 md:py-2.5 border border-gray-200 cursor-pointer rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-all"
                             >
                                 Skip this Question
                             </button>
-                            <button 
+                            <button
                                 onClick={handleNext}
                                 disabled={submitMutation.isPending}
-                                className="px-6 py-2.5 bg-[#6941C6] hover:bg-[#53389E] text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-70 flex items-center gap-2"
+                                className="w-full md:w-auto py-2 px-4 md:px-6 md:py-2.5 bg-[#6941C6] hover:bg-[#53389E] text-white font-semibold md:font-bold rounded-xl shadow-md transition-all disabled:opacity-70 flex items-center gap-2"
                             >
                                 {isLastQuestion ? "Submit Exam" : "Save & Continue"}
                             </button>
@@ -324,7 +330,7 @@ export default function ExamSessionPage() {
                     </div>
                 </Modal>
 
-                <Modal isOpen={isSuccessModalOpen} onClose={() => {}} maxWidth="max-w-3xl">
+                <Modal isOpen={isSuccessModalOpen} onClose={() => { }} maxWidth="max-w-3xl">
                     <div className="flex flex-col items-center p-5 text-center">
                         <Image src="/success.png" alt="Success" width={46} height={46} className='mb-3.5' />
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">Test Completed</h2>
@@ -335,7 +341,7 @@ export default function ExamSessionPage() {
                     </div>
                 </Modal>
 
-                <Modal isOpen={isTimeoutModalOpen} onClose={() => {}} maxWidth="max-w-3xl">
+                <Modal isOpen={isTimeoutModalOpen} onClose={() => { }} maxWidth="max-w-3xl">
                     <div className="flex flex-col items-center p-5 text-center">
                         <Image src="/time.png" alt="Timeout" width={46} height={46} className='mb-3.5' />
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">Timeout!</h2>

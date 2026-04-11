@@ -43,7 +43,7 @@ export default function CandidateExamCard({ title, duration, questions, negative
 
             <div className="mt-auto pt-4 border-t border-gray-100">
                 <Link href={`/candidate/exam/${examId}`} className="block w-full cursor-pointer">
-                    <button className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow-sm transition-colors cursor-pointer">
+                    <button className="w-full py-2 md:py-2.5 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow-sm transition-colors cursor-pointer">
                         Start
                     </button>
                 </Link>

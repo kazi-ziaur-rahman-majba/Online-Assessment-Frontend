@@ -38,7 +38,7 @@ export default function EmployerDashboard() {
                 
                 <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-8">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                        <h1 className="text-2xl font-bold text-gray-900">Online Tests</h1>
+                        <h1 className="text-lg md:text-xl lg:text-2xl font-semibold md:font-bold text-gray-900">Online Tests</h1>
                         
                         <div className="flex-1 max-w-xl w-full mx-0 md:mx-8">
                             <div className="relative group">

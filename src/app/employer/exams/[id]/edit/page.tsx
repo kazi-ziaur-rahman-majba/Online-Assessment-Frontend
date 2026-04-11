@@ -222,36 +222,41 @@ export default function EditExamPage() {
             <div className="min-h-screen flex flex-col bg-[#F9FAFB] font-inter">
                 <Navbar />
 
-                <main className="flex-1 w-full max-w-5xl mx-auto px-6 py-8">
+                <main className="flex-1 w-full max-w-5xl mx-auto px-6 py-4 md:py-8">
                     <div className="flex items-center gap-3 mb-8">
-                        <Link href="/employer/dashboard" className="p-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
-                            <ArrowLeft className="w-5 h-5 text-gray-700" />
+                        <Link href="/employer/dashboard" className="p-1 md:p-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
+                            <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
                         </Link>
-                        <h1 className="text-2xl font-bold text-gray-900">Edit Online Test</h1>
+                        <h1 className="text-lg md:text-xl lg:text-2xl font-semibold md:font-bold text-gray-900">Edit Online Test</h1>
                     </div>
 
-                    <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-4">
-                        {/* Left Side: Steps */}
-                        <div className="flex items-center gap-8">
-                            <div className={`flex items-center gap-2 font-medium ${step === 1 ? 'text-primary border-b-2 border-primary pb-[17px] -mb-[17px]' : 'text-gray-400 cursor-not-allowed'}`}>
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs text-white ${step === 1 ? 'bg-primary' : 'bg-gray-300'}`}>1</div>
-                                Step 1 - Basic Information
+                    <div className="flex flex-col gap-4 mb-8 -mt-3 md:mt-0 border-b border-gray-200 pb-4">
+                        <div className="flex items-center justify-between">
+                            {/* Left Side: Steps (Using flex-wrap to prevent hiding) */}
+                            <div className="flex items-center gap-3 sm:gap-6 flex-wrap">
+                                {/* Step 1 */}
+                                <div className={`flex items-center gap-2 font-medium ${step === 1 ? 'text-primary border-b-2 border-primary pb-[17px] -mb-[17px]' : 'text-gray-400'}`}>
+                                    <div className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 rounded-full flex items-center justify-center text-[10px] sm:text-xs text-white ${step === 1 ? 'bg-primary' : 'bg-gray-300'}`}>1</div>
+                                    <span className="text-xs sm:text-sm">Basic Info</span>
+                                </div>
+
+                                {/* Step 2 */}
+                                <div className={`flex items-center gap-2 font-medium ${step === 2 ? 'text-primary border-b-2 border-primary pb-[17px] -mb-[17px]' : 'text-gray-400'}`}>
+                                    <div className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 rounded-full flex items-center justify-center text-[10px] sm:text-xs text-white ${step === 2 ? 'bg-primary' : 'bg-gray-300'}`}>2</div>
+                                    <span className="text-xs sm:text-sm">Question Sets</span>
+                                </div>
                             </div>
-                            <div className={`flex items-center gap-2 font-medium ${step === 2 ? 'text-primary border-b-2 border-primary pb-[17px] -mb-[17px]' : 'text-gray-400 cursor-not-allowed'}`}>
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs text-white ${step === 2 ? 'bg-primary' : 'bg-gray-300'}`}>2</div>
-                                Step 2 - Question Sets
-                            </div>
+
+                            {/* Right Side: Dashboard Button (Visible on sm/mobile) */}
+                            <Link href="/employer/dashboard">
+                                <button className="flex items-center gap-1 bg-white text-black border border-gray-200 hover:bg-gray-50 font-semibold px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-[10px] sm:text-sm transition-all shadow active:scale-95">
+                                    Dashboard
+                                </button>
+                            </Link>
                         </div>
-
-                        {/* Right Side: Button */}
-                        <Link href="/employer/dashboard">
-                            <button className="flex items-center gap-2 bg-white text-black border border-gray-200 hover:bg-gray-50 font-semibold px-5 py-2.5 rounded-lg text-sm transition-all shadow active:scale-95 cursor-pointer">
-                                Back to Dashboard
-                            </button>
-                        </Link>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-8">
                         {step === 1 ? (
                             <form onSubmit={handleSubmit(onStep1Submit)} className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
                                 <h2 className="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-3">Basic Information</h2>
@@ -317,7 +322,7 @@ export default function EditExamPage() {
                                 </div>
 
                                 <div className="flex justify-end pt-4">
-                                    <button type="submit" disabled={isUpdatingExam} className="bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-medium transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2 cursor-pointer">
+                                    <button type="submit" disabled={isUpdatingExam} className="bg-primary hover:bg-primary-dark text-white px-4 md:px-8 py-2.5 rounded-lg font-medium transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2 cursor-pointer">
                                         {isUpdatingExam && <Loader2 className="w-4 h-4 animate-spin" />}
                                         Update & Next
                                     </button>
@@ -377,12 +382,10 @@ export default function EditExamPage() {
 
                                                 {/* Actions */}
                                                 <div className="px-6 py-3 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center">
-                                                    <button onClick={() => openEditModal(q)} className="text-primary text-sm font-bold hover:text-primary-dark transition-colors flex items-center gap-1 cursor-pointer">
+                                                    <button onClick={() => openEditModal(q)} className="text-primary hidden md:block text-sm font-bold hover:text-primary-dark transition-colors flex items-center gap-1 cursor-pointer">
                                                         <PencilLine className="w-3.5 h-3.5" /> Edit
                                                     </button>
-                                                    <button onClick={() => openEditModal(q)} className="text-primary text-sm font-bold hover:text-primary-dark transition-colors flex items-center gap-1 cursor-pointer">
-                                                        <PencilLine className="w-3.5 h-3.5" /> Edit
-                                                    </button>
+        
                                                     <button onClick={() => openDeleteModal(q.id)} className="text-red-500 text-sm font-bold hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer">
                                                         <Trash2 className="w-3.5 h-3.5" /> Remove From Exam
                                                     </button>
@@ -396,7 +399,7 @@ export default function EditExamPage() {
                                     <button onClick={() => {
                                         queryClient.invalidateQueries({ queryKey: ['exams'] });
                                         router.push('/employer/dashboard');
-                                    }} className="px-8 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium shadow-sm transition-colors cursor-pointer">
+                                    }} className="px-4 md:px-8 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium shadow-sm transition-colors cursor-pointer">
                                         Finish
                                     </button>
                                 </div>
