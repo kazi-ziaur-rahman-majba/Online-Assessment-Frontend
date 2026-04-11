@@ -70,7 +70,14 @@ export default function CreateExamPage() {
     const onStep1Submit = async (data: Step1FormValues) => {
         setIsCreatingExam(true);
         try {
-            const res = await axiosInstance.post('/exams', data);
+            // Append +06:00 offset to ensure the backend treats it as Bangladesh time (UTC+6)
+            // This prevents the time from shifting when converted to UTC on the backend
+            const payload = {
+                ...data,
+                startTime: `${data.startTime}:00+06:00`,
+                endTime: `${data.endTime}:00+06:00`,
+            };
+            const res = await axiosInstance.post('/exams', payload);
             setExamId(res.data?.id || res.data?.data?.id);
             setStep(2);
             showToast('success', 'Exam details saved!');
@@ -257,6 +264,9 @@ export default function CreateExamPage() {
                                         <InputField {...field} type="datetime-local" label="End Time" message={errors.endTime?.message} />
                                     )} />
                                 </div>
+                                <p className="text-[10px] md:text-xs text-gray-500 italic -mt-4 mb-4">
+                                    * Please enter times in UTC+6 (Bangladesh Standard Time).
+                                </p>
 
                                 <Controller name="duration" control={control} render={({ field }) => (
                                     <InputField {...field} type="number" wrapperClass="md:w-1/2" label="Duration (in minutes)" placeholder="Enter minutes" message={errors.duration?.message} />

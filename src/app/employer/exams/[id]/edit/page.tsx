@@ -104,7 +104,13 @@ export default function EditExamPage() {
     const onStep1Submit = async (data: Step1FormValues) => {
         setIsUpdatingExam(true);
         try {
-            await axiosInstance.patch(`/exams/${id}`, data);
+            // Append +06:00 offset to ensure the backend treats it as Bangladesh time (UTC+6)
+            const payload = {
+                ...data,
+                startTime: `${data.startTime}:00+06:00`,
+                endTime: `${data.endTime}:00+06:00`,
+            };
+            await axiosInstance.patch(`/exams/${id}`, payload);
             setStep(2);
             showToast('success', 'Exam details updated!');
         } catch (error: any) {
@@ -314,6 +320,9 @@ export default function EditExamPage() {
                                         )} />
                                     </div>
                                 </div>
+                                <p className="text-[10px] md:text-xs text-gray-500 italic -mt-4 mb-4">
+                                    * Please enter times in UTC+6 (Bangladesh Standard Time).
+                                </p>
 
                                 <div>
                                     <Controller name="duration" control={control} render={({ field }) => (

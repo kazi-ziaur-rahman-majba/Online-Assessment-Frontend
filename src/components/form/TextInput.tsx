@@ -1,4 +1,5 @@
-import React, { ChangeEvent } from "react";
+import React, { ChangeEvent, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 interface InputFieldProps {
   label?: string;
@@ -31,6 +32,8 @@ const InputField: React.FC<InputFieldProps> = ({
   placeholder = "",
   onChange,
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (onChange) {
 
@@ -41,6 +44,9 @@ const InputField: React.FC<InputFieldProps> = ({
       }
     }
   };
+
+  const isPassword = type === "password";
+  const inputType = isPassword ? (showPassword ? "text" : "password") : type;
 
   return (
     <div className="w-full">
@@ -61,7 +67,7 @@ const InputField: React.FC<InputFieldProps> = ({
         <input
           id={name}
           name={name}
-          type={type}
+          type={inputType}
           value={value}
           placeholder={placeholder}
           disabled={disabled}
@@ -73,6 +79,20 @@ const InputField: React.FC<InputFieldProps> = ({
             ${disabled ? "cursor-not-allowed opacity-50" : "cursor-text"}
           `}
         />
+
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+          >
+            {showPassword ? (
+              <Eye className="w-4 h-4" />
+            ) : (
+              <EyeOff className="w-4 h-4" />
+            )}
+          </button>
+        )}
       </div>
 
       {message && <p className="text-xs text-red-500 mt-1">{message}</p>}
