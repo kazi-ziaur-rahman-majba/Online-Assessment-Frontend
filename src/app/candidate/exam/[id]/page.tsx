@@ -226,10 +226,10 @@ export default function ExamSessionPage() {
                                                 setShowQuestionNav(false);
                                             }}
                                             className={`p-2 rounded-lg text-sm font-medium transition-all ${isCurrent
-                                                    ? 'bg-[#6941C6] text-white'
-                                                    : hasAnswer
-                                                        ? 'bg-green-100 text-green-700 border border-green-200'
-                                                        : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'
+                                                ? 'bg-[#6941C6] text-white'
+                                                : hasAnswer
+                                                    ? 'bg-green-100 text-green-700 border border-green-200'
+                                                    : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'
                                                 }`}
                                         >
                                             Q{idx + 1}
@@ -308,7 +308,7 @@ export default function ExamSessionPage() {
                             <button
                                 onClick={handleNext}
                                 disabled={submitMutation.isPending}
-                                className="w-full md:w-auto py-2 px-4 md:px-6 md:py-2.5 bg-[#6941C6] hover:bg-[#53389E] text-white font-semibold md:font-bold rounded-xl shadow-md transition-all disabled:opacity-70 flex items-center gap-2"
+                                className="w-full md:w-auto py-2.5 px-4 md:px-6 md:py-2.5 bg-[#6941C6] hover:bg-[#53389E] text-white font-semibold md:font-bold rounded-xl shadow-md transition-all disabled:opacity-70 flex items-center justify-center gap-2"
                             >
                                 {isLastQuestion ? "Submit Exam" : "Save & Continue"}
                             </button>

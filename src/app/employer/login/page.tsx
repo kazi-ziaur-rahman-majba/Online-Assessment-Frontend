@@ -99,7 +99,7 @@ export default function EmployerLogin() {
                     <div className="mb-6 p-2 bg-green-50/50 rounded-xl border border-green-100">
                         <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">Demo Credentials</p>
                         <div className="flex flex-col gap-1 text-sm text-green-800">
-                            <p><span className="font-semibold">Email:</span> employer@gmail.com</p>
+                            <p><span className="font-semibold">Email:</span> employer@example.com</p>
                             <p><span className="font-semibold">Password:</span> 123456</p>
                         </div>
                     </div>
